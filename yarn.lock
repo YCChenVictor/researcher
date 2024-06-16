@@ -1834,6 +1834,14 @@ cosmiconfig@9.0.0:
     js-yaml "^4.1.0"
     parse-json "^5.2.0"
 
+crawl-website-connectedness@^0.1.13:
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/crawl-website-connectedness/-/crawl-website-connectedness-0.1.13.tgz#844e1d0012f5af3ddc3d68964bbf75d3e6a6832d"
+  integrity sha512-2qLV6zTZ9EX4UYoepBFQS2gmFZSHeKWAeLgC0c6G5AEWseie5AInhWKjkO06mz9qO38xSmU7Z209f/7f2ENBOg==
+  dependencies:
+    cheerio "^1.0.0-rc.12"
+    puppeteer "^22.10.0"
+
 create-jest@^29.7.0:
   version "29.7.0"
   resolved "https://registry.yarnpkg.com/create-jest/-/create-jest-29.7.0.tgz#a355c5b3cb1e1af02ba177fe7afd7feee49a5320"
