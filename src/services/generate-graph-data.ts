@@ -1,7 +1,7 @@
 import fs from 'fs';
 import randomColor from 'randomcolor';
 import { Request, Response, NextFunction } from 'express';
-import main from 'crawl-website-connectedness';
+import crawl from 'crawl-website-connectedness';
 
 const getIdFromNodeName = (nodes: { id: number, name: string, url: string, group: any }[], url: string) => {
     const result = nodes.find((node) => node.url === url);
@@ -50,38 +50,14 @@ const desiredFormat = (structure: object) => {
     return { nodes: nodes, links: links };
   };
 
-const generateGraphData = async (req: Request, res: Response, next: NextFunction) => {
-  //   const startPoint = `http://localhost:3000/${req.body.category}/`;
-  //   const result = await main(startPoint);
-  const result = {
-    'https://ycchenvictor.netlify.app/web-development/': [
-      'https://ycchenvictor.netlify.app/',
-      'https://ycchenvictor.netlify.app/software-dashboard',
-      'https://ycchenvictor.netlify.app/concept/complexity',
-      'https://ycchenvictor.netlify.app/web-development/concept/data-structure-and-algorithm',
-      'https://ycchenvictor.netlify.app/web-development/concept/system-design',
-      'https://ycchenvictor.netlify.app/web-development/concept/ood',
-      'https://ycchenvictor.netlify.app/web-development/concept/operating-system',
-      'https://ycchenvictor.netlify.app/concept/internet'
-    ],
-    'https://ycchenvictor.netlify.app/web-development/concept/data-structure-and-algorithm': [
-      'https://ycchenvictor.netlify.app/',
-      'https://ycchenvictor.netlify.app/software-dashboard'
-    ],
-    'https://ycchenvictor.netlify.app/web-development/concept/system-design': [
-      'https://ycchenvictor.netlify.app/',
-      'https://ycchenvictor.netlify.app/software-dashboard'
-    ],
-    'https://ycchenvictor.netlify.app/web-development/concept/ood': [
-      'https://ycchenvictor.netlify.app/',
-      'https://ycchenvictor.netlify.app/software-dashboard'
-    ],
-    'https://ycchenvictor.netlify.app/web-development/concept/operating-system': [
-      'https://ycchenvictor.netlify.app/',
-      'https://ycchenvictor.netlify.app/software-dashboard'
-    ]
-  };
-
+const generateGraphData = async () => {
+  const result = await crawl(
+    ['https://ycchenvictor.netlify.app/web-development/'],
+    'https://ycchenvictor.netlify.app/',
+    'https://ycchenvictor.netlify.app/',
+    true,
+    new Set(['https://ycchenvictor.netlify.app/', 'https://ycchenvictor.netlify.app/software-dashboard'])
+  );
   return desiredFormat(result);
 };
 
