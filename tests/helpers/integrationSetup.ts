@@ -1,9 +1,9 @@
-import app from '../../src/app';
+import app from "../../src/app";
 
 beforeAll(() => {
   // setup the app
   (global as any).__APP__ = app.listen(3001, () => {
-      console.log('test server started');
+    console.log("test server started");
   });
 });
 

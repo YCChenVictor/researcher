@@ -1,8 +1,8 @@
-'use strict';
-  
-import Sequelize from 'sequelize';
+"use strict";
+
+import Sequelize from "sequelize";
 // import sequelize from './index';
-        
+
 // const user = sequelize.define('user', {
 //   email: {
 //     type: Sequelize.STRING,
@@ -11,5 +11,5 @@ import Sequelize from 'sequelize';
 //     type: Sequelize.STRING
 //   }
 // })
-        
+
 // export default user

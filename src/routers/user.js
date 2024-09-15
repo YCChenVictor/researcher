@@ -1,17 +1,17 @@
-import User from '../models/user.js';
-import jwt from 'jsonwebtoken';
-import passport from '../middleware/passport.js';
+import User from "../models/user.js";
+import jwt from "jsonwebtoken";
+import passport from "../middleware/passport.js";
 
 const userAPIs = (app) => {
-  app.get('/authentication', passport.authenticate('jwt'), (req, res) => {
+  app.get("/authentication", passport.authenticate("jwt"), (req, res) => {
     res.status(200).json({ loggedIn: true });
   });
 
-  app.post('/signup', async (req, res, next) => {
+  app.post("/signup", async (req, res, next) => {
     const { email, password } = req.body.params; // Destructure email and password from req.body.params
 
     if (!email || !password) {
-      return res.status(401).json({ msg: 'Please enter all fields' });
+      return res.status(401).json({ msg: "Please enter all fields" });
     }
 
     try {
@@ -31,11 +31,11 @@ const userAPIs = (app) => {
     } catch (error) {
       // Handle error during user creation
       console.error(error);
-      res.status(500).json({ msg: 'An error occurred' });
+      res.status(500).json({ msg: "An error occurred" });
     }
   });
 
-  app.post('/login', passport.authenticate('local'), (req, res) => {
+  app.post("/login", passport.authenticate("local"), (req, res) => {
     res.status(200).json({ token: req.user.token });
   });
 };

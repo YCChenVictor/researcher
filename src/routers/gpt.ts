@@ -1,6 +1,6 @@
 // import passport from '../middleware/passport';
-import { OpenAI } from 'openai';
-import { Request, Response } from 'express';
+import { OpenAI } from "openai";
+import { Request, Response } from "express";
 
 // const gptApis = (app: any) => {
 //   app.get('/gpt-init', passport.authenticate('jwt'), (req: Request, res: Response) => {
@@ -20,7 +20,7 @@ import { Request, Response } from 'express';
 //             </div>
 //           );
 //         };
-        
+
 //         export default MyComponent;
 //       ```
 //       res.status(200).json({

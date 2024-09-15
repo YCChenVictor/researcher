@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize";
 
 let sequelize;
 
