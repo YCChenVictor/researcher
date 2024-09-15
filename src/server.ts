@@ -1,4 +1,4 @@
-import app from './app';
+import app from "./app";
 
 // console.log('sss')
 
@@ -26,12 +26,11 @@ import app from './app';
 // import cors from './middleware/cors.js'
 // app.use(cors)
 
-
 // start
-if (process.env.NODE_ENV === 'dev') {
+if (process.env.NODE_ENV === "dev") {
   const PORT = 5000;
   app.listen(PORT, () => {
-    console.log('in development mode');
+    console.log("in development mode");
     console.log(`now listening to ${PORT}`);
   });
 } else {

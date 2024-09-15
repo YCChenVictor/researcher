@@ -1,19 +1,26 @@
-import tsParser from '@typescript-eslint/parser';
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import prettierPlugin from "eslint-plugin-prettier";
 
-// eslint.config.js
-export default [
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.strict,
+  ...tseslint.configs.stylistic,
   {
-    files: ["src/**/*.ts"],
-    ignores: ["**/*.config.js"],
-    rules: {
-      "max-len": ["error", { "code": 80 }],
-      "quotes": [2, "single", { "avoidEscape": true }],
-      "no-unused-vars": "error",
-      "semi": "error",
-      "prefer-const": "error"
+    ignores: [
+      '**/coverage/**',
+      '**/dist/**',
+      '**/migrations/**',
+      '**/*.config.js',
+      '**/*.config.ts'
+    ],
+  },
+  {
+    plugins: {
+      prettier: prettierPlugin,
     },
-    languageOptions: {
-      parser: tsParser
-    }
-  }
-];
+    rules: {
+      "prettier/prettier": "error",
+    },
+  },
+);

@@ -1,5 +1,5 @@
-import getArticleFilePaths from '../services/articleFilePaths';
-import { Request, Response, NextFunction } from 'express';
+import getArticleFilePaths from "../services/articleFilePaths";
+import { Request, Response } from "express";
 
 const create = async (req: Request, res: Response) => {
   const dirPath = req.body.dirPath;

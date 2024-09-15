@@ -7,17 +7,17 @@
 // })
 
 // // youtube
-  // app.get("/search-youtube-with-googleapis", async (req, res, next) => {
-  //   try {
-  //     const searchQuery = req.query.search_query;
-  //     const response = await youtube.search.list({
-  //       part: "snippet",
-  //       q: searchQuery,
-  //     });
+// app.get("/search-youtube-with-googleapis", async (req, res, next) => {
+//   try {
+//     const searchQuery = req.query.search_query;
+//     const response = await youtube.search.list({
+//       part: "snippet",
+//       q: searchQuery,
+//     });
 
-  //     const titles = response.data.items.map((item) => item.snippet.title);
-  //     res.send(titles);
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // });
+//     const titles = response.data.items.map((item) => item.snippet.title);
+//     res.send(titles);
+//   } catch (err) {
+//     next(err);
+//   }
+// });
