@@ -1,10 +1,8 @@
-import fs from "fs";
 import randomColor from "randomcolor";
-import { Request, Response, NextFunction } from "express";
 import crawl from "crawl-website-connectedness";
 
 const getIdFromNodeName = (
-  nodes: { id: number; name: string; url: string; group: any }[],
+  nodes: { id: number; name: string; url: string; group: number }[],
   url: string,
 ) => {
   const result = nodes.find((node) => node.url === url);
@@ -20,7 +18,7 @@ const giveColorByGroupTo = (
     id: number;
     name: string;
     url: string;
-    group: any;
+    group: number;
     color?: string;
   }[],
 ) => {
@@ -33,8 +31,20 @@ const giveColorByGroupTo = (
 };
 
 const desiredFormat = (structure: object) => {
-  let nodes: { id: number; name: string; url: string; group: any }[];
-  let links;
+  let nodes: { id: number; name: string; url: string; group: number }[];
+  const links = Object.entries(structure)
+    .map(([key, value]) => {
+      return value.map((item: string) => {
+        // Explicitly specify the type of 'item' as string
+        const source = getIdFromNodeName(nodes, key);
+        const target = getIdFromNodeName(nodes, item);
+        if (source && target) {
+          return { source: source, target: target };
+        }
+      });
+    })
+    .flat()
+    .filter((obj) => obj !== undefined);
   nodes = Object.keys(structure).map((value, index) => {
     let name = value.split("/").slice(-1)[0];
     if (name === "main") {
@@ -48,19 +58,6 @@ const desiredFormat = (structure: object) => {
     };
   });
   nodes = giveColorByGroupTo(nodes);
-  links = Object.entries(structure)
-    .map(([key, value]) => {
-      return value.map((item: string) => {
-        // Explicitly specify the type of 'item' as string
-        const source = getIdFromNodeName(nodes, key);
-        const target = getIdFromNodeName(nodes, item);
-        if (source && target) {
-          return { source: source, target: target };
-        }
-      });
-    })
-    .flat()
-    .filter((obj) => obj !== undefined);
 
   return { nodes: nodes, links: links };
 };
