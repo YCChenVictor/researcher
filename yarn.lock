@@ -1952,10 +1952,10 @@ cosmiconfig@9.0.0, cosmiconfig@^9.0.0:
     js-yaml "^4.1.0"
     parse-json "^5.2.0"
 
-crawl-website-connectedness@^1.0.1:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/crawl-website-connectedness/-/crawl-website-connectedness-1.0.2.tgz#b203978b17cc58a2ffa4537e69ec3395803606cc"
-  integrity sha512-hllnfNsKB0thyRKmxVvNbrzFz7a2f74KpTEkGTaW8f5n315Wi7PhpWmIC7otTMWIdxjQRWrFo7nbvBDD1oniHA==
+crawl-website-connectedness@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/crawl-website-connectedness/-/crawl-website-connectedness-1.0.3.tgz#a549f83fa407f5c000606d07467edca00288ba40"
+  integrity sha512-nle6dUTF2Lkb6Tau2ISGSTWLtjmpDuzKY8b9v2lnOiRYN9GJzgJbXShnd11UFqPeJniKJEB2kiJwThp8wG3h0w==
   dependencies:
     cheerio "^1.0.0-rc.12"
     puppeteer "^23.1.1"
