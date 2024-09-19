@@ -64,14 +64,14 @@ const desiredFormat = (structure: object) => {
 
 const generateGraphData = async () => {
   const result = await crawl(
-    ["https://ycchenvictor.netlify.app/web-development/"],
-    "https://ycchenvictor.netlify.app/",
-    "https://ycchenvictor.netlify.app/",
-    true,
+    ["https://ycchenvictor.netlify.app/web-development/"], // URLs to crawl (queue)
+    "https://ycchenvictor.netlify.app/", // Base URL
+    "https://ycchenvictor.netlify.app/", // Required string in each URL
+    true, // If true, it will log out the progress
     new Set([
       "https://ycchenvictor.netlify.app/",
       "https://ycchenvictor.netlify.app/software-dashboard",
-    ]),
+    ]), // visited. You can add URLs here to prevent the crawler from visiting them
   );
   return desiredFormat(result);
 };
