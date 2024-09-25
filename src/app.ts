@@ -1,17 +1,14 @@
 import express from "express";
 import nodeGraphRouter from "./routers/nodeGraphRouter";
-import articlePathRouter from "./routers/articlePathRouter";
 import cors from "cors";
 
 const app = express();
 
-// parse application/json
 app.use(express.json());
 
-// cors
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_BASE_URL,
   }),
 );
 
@@ -22,8 +19,5 @@ app.get("/", (req, res) => {
 
 // node graph
 app.use("/node-graph", nodeGraphRouter);
-
-// article path
-app.use("/article-path", articlePathRouter);
 
 export default app;
