@@ -9,7 +9,7 @@
     "test": "jest",
     "test:fix": "yarn jest --bail",
     "test:coverage": "jest --coverage",
-    "start": "yarn compile && node dist/src/server.js",
+    "start": "yarn compile && node dist/server.js",
     "eslint:fix": "eslint --fix",
     "compile": "tsc && tsc-alias",
     "debug": "nodemon --inspect-brk server.js"
