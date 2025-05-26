@@ -20,12 +20,11 @@ const readNodesStructure = (dir: string) => {
 };
 
 const writeNodesStructure = (dir: string, nodesData: string) => {
-  console.log("zxcvvzvcxzzcvx");
-  console.log(nodesData);
   fs.writeFileSync(dir, nodesData, "utf8");
 
   console.log("Nodes written successfully");
 };
+
 const readMarkdownFiles = (dir: string, fileList: string[] = []) => {
   const files = fs.readdirSync(dir);
 
@@ -61,7 +60,7 @@ const generateRandomColors = (num: number) => {
 app.use(
   cors({
     origin: process.env.FRONTEND_BASE_URL,
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
   }),
@@ -111,6 +110,21 @@ app.post("/refresh-nodes", () => {
 
   writeNodesStructure(nodesStructurePath, JSON.stringify(parsedNodesStructure));
 });
+
+app.patch("/add-links", (req, res) => {
+  const nodesStructure = readNodesStructure(nodesStructurePath);
+  const parsedNodesStructure = JSON.parse(nodesStructure);
+  if(!parsedNodesStructure.rawLinks) {
+    parsedNodesStructure.rawLinks = {};
+  }
+  const link = req.body
+  parsedNodesStructure.rawLinks[link.key] = {
+    parents: link.parent,
+    children: link.children,
+  }
+  writeNodesStructure(nodesStructurePath, JSON.stringify(parsedNodesStructure));
+  res.send("OK");
+})
 
 // hello world
 app.get("/", (req, res) => {
