@@ -77,8 +77,6 @@ app.post("/refresh-nodes", () => {
     const parts: string[] = fileName.split("/");
     const baseName = parts.pop();
     const folder = parts.pop();
-    console.log(baseName);
-    console.log(folder);
     if (!structure[String(folder)]) {
       structure[String(folder)] = [];
     }
@@ -114,17 +112,25 @@ app.post("/refresh-nodes", () => {
 app.patch("/add-links", (req, res) => {
   const nodesStructure = readNodesStructure(nodesStructurePath);
   const parsedNodesStructure = JSON.parse(nodesStructure);
-  if(!parsedNodesStructure.rawLinks) {
+  if (!parsedNodesStructure.rawLinks) {
     parsedNodesStructure.rawLinks = {};
   }
-  const link = req.body
+  const link = req.body;
+  const parents = link.parents;
+  const children = link.children;
   parsedNodesStructure.rawLinks[link.key] = {
-    parents: link.parent,
-    children: link.children,
-  }
+    parents: parents,
+    children: children,
+  };
+  // for (const parent of parents) {
+  //   parsedNodesStructure.links.push({ source: parent, target: link.key });
+  // }
+  // for (const child of children) {
+  //   parsedNodesStructure.links.push({ source: link.key, target: child });
+  // }
   writeNodesStructure(nodesStructurePath, JSON.stringify(parsedNodesStructure));
   res.send("OK");
-})
+});
 
 // hello world
 app.get("/", (req, res) => {
