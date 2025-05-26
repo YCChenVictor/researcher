@@ -3,7 +3,7 @@ import nodeGraphRouter from "./routers/nodeGraphRouter";
 import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
-// import path from "path";
+import path from "path";
 
 dotenv.config();
 
@@ -25,24 +25,24 @@ const writeNodesStructure = (dir: string, nodesData: string) => {
   console.log("Nodes written successfully");
 };
 
-// const readMarkdownFiles = (dir: string, fileList: string[] = []) => {
-//   const files = fs.readdirSync(dir);
+const readMarkdownFiles = (dir: string, fileList: string[] = []) => {
+  const files = fs.readdirSync(dir);
 
-//   files.forEach((file) => {
-//     const filePath = path.join(dir, file);
-//     const stat = fs.statSync(filePath);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
 
-//     if (stat.isDirectory()) {
-//       // Recursively read files in subdirectories
-//       readMarkdownFiles(filePath, fileList);
-//     } else if (file.endsWith(".md")) {
-//       // Add .md file to the list
-//       fileList.push(filePath);
-//     }
-//   });
+    if (stat.isDirectory()) {
+      // Recursively read files in subdirectories
+      readMarkdownFiles(filePath, fileList);
+    } else if (file.endsWith(".md") && !filePath.includes("in-progress")) {
+      // Add .md file to the list
+      fileList.push(filePath);
+    }
+  });
 
-//   return fileList;
-// };
+  return fileList;
+};
 
 const generateRandomColors = (num: number) => {
   const colors = [];
@@ -87,43 +87,31 @@ app.post("/refresh-links", (req, res) => {
 });
 
 app.post("/refresh-nodes", () => {
-  const restructure: Record<string, Set<string>> = {};
-  const nodes = [];
-  const nodesStructure = JSON.parse(readNodesStructure(nodesStructurePath));
-  const rawLinks = nodesStructure.rawLinks || {};
-  const categories = new Set<string>();
-  for (const key in rawLinks) {
-    const parts: string[] = key.split("/");
-    parts.pop();
+  const articlesPath = "../blog-frontend/src/posts-submodule";
+  const files = readMarkdownFiles(articlesPath);
+  const fileNames = files.map((file) => path.relative(articlesPath, file));
+  const structure: Record<string, string[]> = { base: [] };
+  for (const fileName of fileNames) {
+    const parts: string[] = fileName.split("/");
+    const baseName = parts.pop();
     const folder = parts.pop();
-    if (folder) {
-      categories.add(folder);
+    if (!structure[String(folder)]) {
+      structure[String(folder)] = [];
+    }
+    if (!folder) {
+      structure["base"].push(String(baseName).replace(".md", ""));
+    } else {
+      structure[folder].push(String(baseName).replace(".md", ""));
     }
   }
-  for (const key in rawLinks) {
-    const combined = [key, ...rawLinks[key].parents, ...rawLinks[key].children];
-    for (const item of combined) {
-      const parts: string[] = item.split("/");
-      const baseName = parts.pop();
-      const folder = parts.pop();
-      if (!baseName) {
-        continue;
-      }
-      if (!folder) {
-        continue;
-      }
-      if (!restructure[folder]) {
-        restructure[folder] = new Set<string>();
-      }
-      restructure[folder].add(baseName);
-    }
-  }
-  const colors = generateRandomColors(categories.size);
+
+  const nodes = [];
+  const colors = generateRandomColors(Object.keys(structure).length);
   let index = 0;
-  for (const key in restructure) {
-    for (const item of restructure[key]) {
+  for (const key in structure) {
+    for (const item of structure[key]) {
       nodes.push({
-        key: `/${key}/${item}`,
+        key: key + "/" + item,
         name: item,
         group: key,
         color: colors[index],
@@ -131,9 +119,62 @@ app.post("/refresh-nodes", () => {
     }
     index++;
   }
-  nodesStructure.nodes = nodes;
-  writeNodesStructure(nodesStructurePath, JSON.stringify(nodesStructure));
+
+  const nodesStructure = readNodesStructure(nodesStructurePath);
+  const parsedNodesStructure = JSON.parse(nodesStructure);
+  parsedNodesStructure.nodes = nodes;
+
+  writeNodesStructure(nodesStructurePath, JSON.stringify(parsedNodesStructure));
 });
+
+// app.post("/refresh-nodes", () => {
+//   const restructure: Record<string, Set<string>> = {};
+//   const nodes = [];
+//   const nodesStructure = JSON.parse(readNodesStructure(nodesStructurePath));
+//   const rawLinks = nodesStructure.rawLinks || {};
+//   const categories = new Set<string>();
+//   for (const key in rawLinks) {
+//     const parts: string[] = key.split("/");
+//     parts.pop();
+//     const folder = parts.pop();
+//     if (folder) {
+//       categories.add(folder);
+//     }
+//   }
+//   for (const key in rawLinks) {
+//     const combined = [key, ...rawLinks[key].parents, ...rawLinks[key].children];
+//     for (const item of combined) {
+//       const parts: string[] = item.split("/");
+//       const baseName = parts.pop();
+//       const folder = parts.pop();
+//       if (!baseName) {
+//         continue;
+//       }
+//       if (!folder) {
+//         continue;
+//       }
+//       if (!restructure[folder]) {
+//         restructure[folder] = new Set<string>();
+//       }
+//       restructure[folder].add(baseName);
+//     }
+//   }
+//   const colors = generateRandomColors(categories.size);
+//   let index = 0;
+//   for (const key in restructure) {
+//     for (const item of restructure[key]) {
+//       nodes.push({
+//         key: `/${key}/${item}`,
+//         name: item,
+//         group: key,
+//         color: colors[index],
+//       });
+//     }
+//     index++;
+//   }
+//   nodesStructure.nodes = nodes;
+//   writeNodesStructure(nodesStructurePath, JSON.stringify(nodesStructure));
+// });
 
 app.patch("/add-links", (req, res) => {
   const nodesStructure = readNodesStructure(nodesStructurePath);
