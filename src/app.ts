@@ -186,9 +186,18 @@ app.patch("/add-links", (req, res) => {
   const parents = link.parents;
   const children = link.children;
   parsedNodesStructure.rawLinks[link.key] = {
-    parents: parents,
-    children: children,
+    parents: [...new Set(parents)],
+    children: [...new Set(children)],
   };
+  for (const child of children) {
+    if (!parsedNodesStructure.rawLinks[child]) {
+      parsedNodesStructure.rawLinks[child] = { parents: [], children: [] };
+    }
+    parsedNodesStructure.rawLinks[child].parents.push(link.key);
+    parsedNodesStructure.rawLinks[child].parents = [
+      ...new Set(parsedNodesStructure.rawLinks[child].parents),
+    ];
+  }
   writeNodesStructure(nodesStructurePath, JSON.stringify(parsedNodesStructure));
   res.send("OK");
 });
