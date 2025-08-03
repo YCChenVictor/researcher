@@ -1,3 +1,0 @@
-[submodule "src/posts-submodule"]
-	path = src/posts-submodule
-	url = https://github.com/YCChenVictor/blog-articles.git
