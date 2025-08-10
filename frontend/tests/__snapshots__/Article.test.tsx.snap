@@ -1,0 +1,93 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Article renders Article component without crashing 1`] = `
+<div
+  className="bg-gray-400 flex"
+>
+  <div
+    className=""
+  >
+    <div
+      className="sticky top-0 h-screen overflow-y-auto"
+    >
+      <div
+        className="hidden lg:block"
+      >
+         
+        <div
+          className="p-2"
+        >
+           
+          <aside
+            className="ps-sidebar-root css-1wvake5"
+            data-testid="ps-sidebar-root-test-id"
+            width="250px"
+          >
+            <div
+              className="ps-sidebar-container css-aslf1b"
+              data-testid="ps-sidebar-container-test-id"
+            >
+              <nav
+                className="ps-menu-root css-vj11vy"
+              >
+                <ul
+                  className="css-ewdv3l"
+                >
+                  <h3
+                    className="p-4"
+                  >
+                    Attributes
+                  </h3>
+                  <div
+                    className="p-4"
+                  >
+                    <div
+                      className="px-4"
+                      style={
+                        {
+                          "color": "black",
+                        }
+                      }
+                    >
+                      words: 
+                      2
+                    </div>
+                  </div>
+                  <h3
+                    className="p-4"
+                  >
+                    Titles
+                  </h3>
+                </ul>
+              </nav>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    className="p-8"
+    id="article"
+  >
+    <div>
+      <p>
+        Test content
+      </p>
+    </div>
+  </div>
+  <div
+    className="lg:hidden"
+  >
+     
+  </div>
+  <div>
+    <button
+      className="scroll-to-top fixed bottom-4 right-4 bg-gray-500 text-white px-4 py-2 rounded shadow hidden"
+      onClick={[Function]}
+    >
+      Top
+    </button>
+  </div>
+</div>
+`;

@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RenderMermaid renders Article component without crashing 1`] = `
+<div
+  dangerouslySetInnerHTML={
+    {
+      "__html": "",
+    }
+  }
+/>
+`;

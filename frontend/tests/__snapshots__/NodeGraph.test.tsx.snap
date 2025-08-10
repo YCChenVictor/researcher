@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`App renders NodeGraph 1`] = `
+<div
+  id="node-graph"
+>
+  <button
+    className="px-4 py-2 font-semibold text-white bg-blue-500 rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
+    onClick={[Function]}
+  >
+    Draw Again
+  </button>
+  <div>
+    Something went wrong
+  </div>
+</div>
+`;

@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`App renders RenderCodeBlock without crashing 1`] = `
+<code
+  className="bg-gray-500 text-white p-0.5"
+/>
+`;

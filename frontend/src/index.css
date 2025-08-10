@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+h1 {
+  @apply text-6xl font-bold;
+}
+h2 {
+  @apply text-5xl pb-8 pt-8 font-bold;
+}
+h3 {
+  @apply text-4xl pb-6 pt-6 font-bold;
+}
+h4 {
+  @apply text-3xl pb-4 pt-4;
+}
+h5 {
+  @apply text-2xl pb-2 pt-2;
+}
+h6 {
+}
+a {
+  @apply text-gray-200 hover:text-black px-0.5 py-0.5 lg:py-1 mx-auto;
+}
+ul {
+  @apply list-disc;
+  @apply list-inside;
+  @apply px-2;
+}
+li {
+  @apply px-2;
+}
+ol {
+  @apply list-decimal;
+  @apply list-inside;
+  @apply p-4;
+}
+code {
+  @apply bg-gray-300;
+  @apply border-gray-500;
+  @apply p-0.5;
+  @apply text-sm;
+  @apply font-mono;
+  @apply whitespace-pre-wrap;
+  @apply break-words;
+  @apply max-w-4xl;
+}
+p {
+  @apply my-4;
+}
