@@ -87,11 +87,7 @@ const App: React.FC = () => {
         setNodesStructure(nodeStructure);
 
         const markdownFiles = importAll(
-          require.context(
-            "./posts-submodule/",
-            true,
-            /^(?!.*in-progress).*\.md$/,
-          ),
+          require.context("./articles/", true, /^(?!.*in-progress).*\.md$/),
         );
 
         await checkServer();

@@ -40,7 +40,7 @@
     "test:fix": "jest --bail",
     "coverage": "jest --coverage",
     "eslint": "eslint",
-    "eslint:fix": "eslint --fix"
+    "format": "eslint --fix"
   },
   "devDependencies": {
     "@eslint/js": "^9.4.0",
