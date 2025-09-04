@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+  # db:
+  #   image: timescale/timescaledb:2.18.1-pg16 # avoid using latest tag
+  #   restart: unless-stopped
+  #   ports:
+  #     - 5430:5430
+  #   command: -p 5430
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #   networks:
+  #     - app-network
+  # webserver:
+  #   image: nginx:1.26.2-alpine # avoid using latest tag
+  #   restart: always
+  #   ports:
+  #     - 443:443
+  #     - 80:80
+  #   volumes:
+  #     - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+  #     - ./ssl/localhost.crt:/etc/ssl/certs/localhost.crt
+  #     - ./ssl/localhost.key:/etc/ssl/private/localhost.key
+  #   networks:
+  #     - app-network
+# volumes:
+#   app-logs:
+# networks:
+#   app-network:
+#     driver: bridge
