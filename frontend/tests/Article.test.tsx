@@ -1,6 +1,6 @@
 import * as renderer from "react-test-renderer";
 import * as React from "react";
-import Article from "../src/components/Article";
+import Article from "../src/components/Articles/Article";
 
 describe("Article", () => {
   it("renders Article component without crashing", () => {

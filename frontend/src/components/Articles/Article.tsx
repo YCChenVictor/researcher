@@ -4,25 +4,16 @@ import remarkMath from "remark-math";
 import { marked } from "marked";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import SidebarLayout from "./SidebarLayout";
-import RenderCodeBlock from "./RenderCodeBlock";
-import RenderMermaid from "./RenderMermaid";
-import ScrollToTopButton from "./ScrollToTopButton";
-import LinkPage from "./LinkPage";
-import nodeStructure from "../node-structure.json";
+import SidebarLayout from "../SidebarLayout";
+import RenderCodeBlock from "../RenderCodeBlock";
+import RenderMermaid from "../RenderMermaid";
+import ScrollToTopButton from "../ScrollToTopButton";
+import LinkPage from "../LinkPage";
+import nodeStructure from "../../node-structure.json";
 import remarkGfm from "remark-gfm";
 
-const Article = ({
-  filePath,
-  content,
-  parents,
-  children,
-}: {
-  filePath: string;
-  content: string;
-  parents: string[];
-  children: string[];
-}) => {
+const Article = ({ filePath }: { filePath: string }) => {
+  const [content, setContent] = useState<string>("");
   const [rawTitles, setRawTitles] = useState<
     { content: string; tagName: string }[]
   >([]);
@@ -34,6 +25,12 @@ const Article = ({
   if (!category) {
     category = "base";
   }
+
+  const fetchFile = async (filename: string) => {
+    const res = await fetch(`http://localhost:5000/articles/hello.mdx`);
+    if (!res.ok) throw new Error("Failed to fetch file");
+    return await res.text(); // backend sends raw markdown
+  };
 
   const parseArticle = async () => {
     try {
@@ -53,6 +50,9 @@ const Article = ({
   };
 
   useEffect(() => {
+    // get article content
+    fetchFile("hello.mdx").then(setContent).catch(console.error);
+
     parseArticle().catch((error) => {
       console.log(error);
     });
@@ -73,12 +73,12 @@ const Article = ({
       <div className="" ref={componentSidebarRef}>
         <div className="sticky top-0 h-screen overflow-y-auto">
           <div className="hidden lg:block">
-            <LinkPage
+            {/* <LinkPage
               self={`${category}/${articleName}`}
               allNodes={nodeStructure.nodes.map((item) => item.key)}
-              parents={parents}
-              children={children}
-            />
+              // parents={parents}
+              // children={children}
+            /> */}
             <div className="p-2">
               <SidebarLayout
                 isCollapsed={false}

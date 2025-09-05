@@ -2,6 +2,7 @@ import { Router } from "express";
 import GitHubClient from "../services/github";
 
 const router = Router();
+const gh = new GitHubClient();
 
 // curl -X POST http://localhost:5000/articles \
 //   -H "Content-Type: application/json" \
@@ -24,10 +25,9 @@ router.post("/", async (req, res) => {
     ${content}
     `;
 
-  const gh = new GitHubClient();
-
   try {
-    const r = await gh.create();
+    const filename = `${slug}.md`;
+    const r = await gh.upsert(filename, md);
     console.log(r);
     res.json({ ok: true });
   } catch (e) {
@@ -36,16 +36,29 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
-  const gh = new GitHubClient();
-
+router.get("/", async (_req, res) => {
   try {
-    const r = await gh.list();
-    console.log(r);
-    res.json({ ok: true });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ error: e });
+    const files = await gh.list();
+
+    res.json(files);
+  } catch (error) {
+    console.error("GitHub list error:", error);
+    res.status(500).json({ error });
+  }
+});
+
+router.get("/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    if (!filename) {
+      return res.status(400).json({ error: "Filename required" });
+    }
+
+    const content = await gh.get(filename);
+    res.json({ ok: true, content });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
   }
 });
 
