@@ -38,7 +38,7 @@ export default function List({
           );
         const data: Item[] = await res.json();
         setItems(
-          data.filter((i) => i.type === "file" && i.name.endsWith(".mdx")),
+          data.filter((i) => i.type === "file" && i.name.endsWith(".md")),
         );
       } catch (error) {
         setErr("Failed to load");
@@ -59,7 +59,7 @@ export default function List({
           <div className="font-medium">{it.name}</div>
           <div className="text-sm opacity-70">{it.path}</div>
           <div className="mt-2 text-sm space-x-3">
-            <Link className="underline text-blue-600" to={`/articles/hello`}>
+            <Link className="underline text-blue-600" to={it.path}>
               Open in App
             </Link>
             <a

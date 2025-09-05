@@ -62,4 +62,25 @@ router.get("/:filename", async (req, res) => {
   }
 });
 
+router.put("/:slug", async (req, res) => {
+  try {
+    const { slug, title, content } = req.body;
+    const filename = `${slug}.md`;
+    const md = `
+    ---
+    title: "${title}"
+    slug: "${slug}"
+    ---
+    
+    ${content}
+    `;
+
+    await gh.upsert(filename, md);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "update failed" });
+  }
+});
+
 export default router;

@@ -55,30 +55,32 @@ const App: React.FC = () => {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/articles`);
       const articles: Article[] = await res.json();
 
+      // debugger;
+
       if (articles.length) {
         const routes = articles.map((item) => (
           <Route
             key={item.name}
-            path={item.path}
+            path={`articles/${item.path}`}
             element={
               <Article
-                filePath={item.path}
-                // parents={
-                //   (
-                //     nodeStructure.rawLinks as Record<
-                //       string,
-                //       { parents: string[] }
-                //     >
-                //   )[item.url]?.parents || []
-                // }
-                // children={
-                //   (
-                //     nodeStructure.rawLinks as Record<
-                //       string,
-                //       { children: string[] }
-                //     >
-                //   )[item.url]?.children || []
-                // }
+
+              // parents={
+              //   (
+              //     nodeStructure.rawLinks as Record<
+              //       string,
+              //       { parents: string[] }
+              //     >
+              //   )[item.url]?.parents || []
+              // }
+              // children={
+              //   (
+              //     nodeStructure.rawLinks as Record<
+              //       string,
+              //       { children: string[] }
+              //     >
+              //   )[item.url]?.children || []
+              // }
               />
             }
           />
