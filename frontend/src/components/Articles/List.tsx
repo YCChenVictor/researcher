@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface Item {
   name: string;
@@ -58,6 +59,9 @@ export default function List({
           <div className="font-medium">{it.name}</div>
           <div className="text-sm opacity-70">{it.path}</div>
           <div className="mt-2 text-sm space-x-3">
+            <Link className="underline text-blue-600" to={`/articles/hello`}>
+              Open in App
+            </Link>
             <a
               className="underline"
               href={it.html_url}

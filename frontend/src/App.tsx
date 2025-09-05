@@ -2,7 +2,7 @@ import axios from "axios";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Article from "./components/Article";
+import Article from "./components/Articles/Article";
 import Articles from "./components/Articles";
 import { importAllFilesAndFetchContents } from "./utils/loadArticles";
 import Main from "./components/Main";
@@ -10,7 +10,12 @@ import { NodesStructure } from "./types/nodesStructure";
 import nodeStructure from "./node-structure.json";
 import { ServerProvider, useServer } from "./components/ServerProvider";
 
-const backendUrl = process.env.REACT_APP_BACKEND_URL ?? "";
+interface Article {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+}
 
 const App: React.FC = () => {
   const backendHost = process.env.REACT_APP_BACKEND_URL ?? "";
@@ -45,91 +50,47 @@ const App: React.FC = () => {
     });
   };
 
-  const handleRefreshNodes = async () => {
+  const fetchData = async () => {
     try {
-      if (!backendUrl) throw new Error("BACKEND_URL env is not set");
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/articles`);
+      const articles: Article[] = await res.json();
 
-      const response = await fetch(backendUrl + "/refresh-nodes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "value" }),
-      });
-
-      if (!response.ok) throw new Error("Request failed");
-      const result = await response.json();
-      console.log("Backend Response:", result);
-    } catch (error) {
-      console.error("Error during request:", error);
-    }
-  };
-
-  const handleRefreshLinks = async () => {
-    try {
-      if (!backendUrl) throw new Error("BACKEND_URL env is not set");
-
-      const response = await fetch(backendUrl + "/refresh-links", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "value" }),
-      });
-
-      if (!response.ok) throw new Error("Request failed");
-      const result = await response.json();
-      console.log("Backend Response:", result);
-    } catch (error) {
-      console.error("Error during request:", error);
+      if (articles.length) {
+        const routes = articles.map((item) => (
+          <Route
+            key={item.name}
+            path={item.path}
+            element={
+              <Article
+                filePath={item.path}
+                // parents={
+                //   (
+                //     nodeStructure.rawLinks as Record<
+                //       string,
+                //       { parents: string[] }
+                //     >
+                //   )[item.url]?.parents || []
+                // }
+                // children={
+                //   (
+                //     nodeStructure.rawLinks as Record<
+                //       string,
+                //       { children: string[] }
+                //     >
+                //   )[item.url]?.children || []
+                // }
+              />
+            }
+          />
+        ));
+        setArticleRoutes(routes);
+      }
+    } catch (err) {
+      console.error("Error loading data:", err);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setNodesStructure(nodeStructure);
-
-        const markdownFiles = importAll(
-          require.context("./articles/", true, /^(?!.*in-progress).*\.md$/),
-        );
-
-        await checkServer();
-        const articles = await importAllFilesAndFetchContents(markdownFiles);
-        setArticles(articles);
-
-        if (nodeStructure && articles.length) {
-          const routes = articles.map((item) => (
-            <Route
-              key={item.url}
-              path={item.url}
-              element={
-                <Article
-                  filePath={item.url}
-                  content={item.content}
-                  parents={
-                    (
-                      nodeStructure.rawLinks as Record<
-                        string,
-                        { parents: string[] }
-                      >
-                    )[item.url]?.parents || []
-                  }
-                  children={
-                    (
-                      nodeStructure.rawLinks as Record<
-                        string,
-                        { children: string[] }
-                      >
-                    )[item.url]?.children || []
-                  }
-                />
-              }
-            />
-          ));
-          setArticleRoutes(routes);
-        }
-      } catch (err) {
-        console.error("Error loading data:", err);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -146,7 +107,10 @@ const App: React.FC = () => {
       <div className="prose p-4 mx-auto flex flex-col lg:flex-row lg:space-x-4">
         <Router>
           <Routes>
-            <Route path="/articles" element={<Articles />} />
+            <Route
+              path="/articles"
+              element={<Articles articles={articles} />}
+            />
             <Route
               path="/"
               element={<Main articles={articles} serverOn={serverOn} />}
