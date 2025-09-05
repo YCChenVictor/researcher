@@ -36,4 +36,17 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  const gh = new GitHubClient();
+
+  try {
+    const r = await gh.list();
+    console.log(r);
+    res.json({ ok: true });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ error: e });
+  }
+});
+
 export default router;

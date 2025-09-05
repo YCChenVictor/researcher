@@ -18,7 +18,7 @@ const App: React.FC = () => {
     [],
   );
   const [articleRoutes, setArticleRoutes] = useState<JSX.Element[]>([]);
-  const [nodesStructure, setNodesStructure] = useState<NodesStructure>({
+  const [, setNodesStructure] = useState<NodesStructure>({
     nodes: [],
     links: [],
     rawLinks: {},
@@ -142,32 +142,11 @@ const App: React.FC = () => {
         >
           Homepage
         </a>
-        {serverOn && (
-          <>
-            <button
-              onClick={handleRefreshNodes}
-              className="text-2xl font-bold text-gray-900 bg-gray-600 hover:bg-gray-400 px-4 py-2 rounded-lg shadow"
-            >
-              Refresh Nodes
-            </button>
-            <button
-              onClick={handleRefreshLinks}
-              className="text-2xl font-bold text-gray-900 bg-gray-600 hover:bg-gray-400 px-4 py-2 rounded-lg shadow"
-            >
-              Refresh Links
-            </button>
-          </>
-        )}
       </div>
       <div className="prose p-4 mx-auto flex flex-col lg:flex-row lg:space-x-4">
         <Router>
           <Routes>
-            <Route
-              path="/articles"
-              element={
-                <Articles articles={articles} nodesStructure={nodesStructure} />
-              }
-            />
+            <Route path="/articles" element={<Articles />} />
             <Route
               path="/"
               element={<Main articles={articles} serverOn={serverOn} />}
