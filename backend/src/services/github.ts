@@ -66,4 +66,25 @@ export default class GitHubClient {
     const data = await res.json();
     console.log("Success:", data);
   }
+
+  async list() {
+    const res = await fetch(
+      `https://api.github.com/repos/${this.owner}/${this.repo}/contents/posts?ref=${this.branch}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      },
+    );
+
+    if (!res.ok) {
+      console.error("Error:", res.status, await res.text());
+      return [];
+    }
+
+    const data = await res.json();
+    return data
+  }
 }

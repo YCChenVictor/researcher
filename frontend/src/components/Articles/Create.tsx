@@ -15,7 +15,9 @@ export default function CreateArticleModal() {
     });
     alert("Article created!");
     setOpen(false); // close modal
-    setSlug(""); setTitle(""); setContent("");
+    setSlug("");
+    setTitle("");
+    setContent("");
   }
 
   return (
@@ -25,7 +27,7 @@ export default function CreateArticleModal() {
         onClick={() => setOpen(true)}
         className="px-3 py-2 rounded-md bg-black text-white"
       >
-        New Article
+        Create
       </button>
 
       {/* Modal */}

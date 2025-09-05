@@ -6,9 +6,6 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-console.log("zxcvzxcvzxcvzvxc");
-console.log(path.resolve(process.cwd(), ".env"));
-
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const app = express();
