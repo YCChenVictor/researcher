@@ -1,11 +1,15 @@
 import express from "express";
 import nodeGraphRouter from "./routers/nodeGraphRouter";
+import article from "./routers/article";
 import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-dotenv.config();
+console.log("zxcvzxcvzxcvzvxc");
+console.log(path.resolve(process.cwd(), ".env"));
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const app = express();
 
@@ -209,5 +213,7 @@ app.get("/", (req, res) => {
 
 // node graph
 app.use("/node-graph", nodeGraphRouter);
+
+app.use("/articles", article);
 
 export default app;
