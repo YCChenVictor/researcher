@@ -1,5 +1,6 @@
 import * as React from "react";
 import { NodesStructure } from "../types/nodesStructure";
+import Create from "./Articles/Create";
 
 type Articles = {
   url: string;
@@ -12,7 +13,6 @@ const Articles = ({
   articles: Articles;
   nodesStructure: NodesStructure;
 }) => {
-  // Group articles by their category
   const grouped: Record<string, string[]> = {};
   for (const article of articles) {
     const parts = article.url.split("/");
@@ -49,6 +49,7 @@ const Articles = ({
   return (
     <div>
       <h1>Articles</h1>
+      <Create />
       {list}
     </div>
   );
