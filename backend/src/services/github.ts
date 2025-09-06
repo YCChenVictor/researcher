@@ -70,8 +70,6 @@ export default class GitHubClient {
       },
     );
 
-    console.log("zxcvxzcvxzcvxzcv")
-
     return data;
   }
 
@@ -102,5 +100,30 @@ export default class GitHubClient {
       return Buffer.from(content, "base64").toString("utf8");
     }
     return "";
+  }
+
+  async destroy(filename: string): Promise<void> {
+    const filePath = `posts/${filename}`;
+
+    // Get file metadata to retrieve SHA
+    const { data } = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/contents/{path}",
+      { owner: this.owner, repo: this.repo, path: filePath, ref: this.branch },
+    );
+
+    console.log(data)
+
+    const sha = Array.isArray(data) ? "" : data.sha;
+    if (!sha) throw new Error("File not found or sha missing");
+
+    // Delete the file
+    await this.octokit.request("DELETE /repos/{owner}/{repo}/contents/{path}", {
+      owner: this.owner,
+      repo: this.repo,
+      path: filePath,
+      message: `delete ${filename}`,
+      sha,
+      branch: this.branch,
+    });
   }
 }
