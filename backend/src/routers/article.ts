@@ -4,13 +4,6 @@ import GitHubClient from "../services/github";
 const router = Router();
 const gh = new GitHubClient();
 
-// curl -X POST http://localhost:5000/articles \
-//   -H "Content-Type: application/json" \
-//   -d '{
-//     "slug": "my-first-post",
-//     "title": "My First Post",
-//     "content": "This is the **markdown** content of my first article."
-//   }'
 router.post("/", async (req, res) => {
   const { slug, title, content } = req.body;
   if (!slug || !title || !content)
@@ -48,6 +41,7 @@ router.get("/", async (_req, res) => {
 });
 
 router.get("/:filename", async (req, res) => {
+  console.log("zxcvzxcvzxcv")
   try {
     const { filename } = req.params;
     if (!filename) {
@@ -80,6 +74,25 @@ router.put("/:slug", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "update failed" });
+  }
+});
+
+router.post("/destroy", async (req, res) => {
+  const { filename, sha } = req.body;
+
+  console.log("zxcvxzcvzxcv")
+  console.log(filename)
+
+  if (!filename || !sha) {
+    return res.status(400).json({ error: "Missing path or sha" });
+  }
+
+  try {
+    await gh.destroy(filename);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error });
   }
 });
 
