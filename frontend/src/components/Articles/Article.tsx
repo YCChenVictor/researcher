@@ -4,7 +4,7 @@ import remarkMath from "remark-math";
 import { marked } from "marked";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import SidebarLayout from "../SidebarLayout";
+import SidebarLayout from "./SidebarLayout";
 import RenderCodeBlock from "../RenderCodeBlock";
 import RenderMermaid from "../RenderMermaid";
 import ScrollToTopButton from "../ScrollToTopButton";
@@ -12,24 +12,123 @@ import LinkPage from "../LinkPage";
 import nodeStructure from "../../node-structure.json";
 import remarkGfm from "remark-gfm";
 
-const Article = ({ filePath }: { filePath: string }) => {
+const Article = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
   const [content, setContent] = useState<string>("");
   const [rawTitles, setRawTitles] = useState<
     { content: string; tagName: string }[]
   >([]);
 
   const componentSidebarRef = useRef(null);
-  const filePathSplit = filePath.split("/");
+  const filePathSplit = "filePath".split("/");
   const articleName = filePathSplit.pop() || "undefined";
   let category = filePathSplit.pop();
   if (!category) {
     category = "base";
   }
 
+  const renderArticle = (
+    <div id="article" className="p-8">
+      <div>
+        <ReactMarkdown
+          components={{
+            h1: () => (
+              <h1 className="text-center">{`(${category}) ${articleName}`}</h1>
+            ),
+            h2: ({ children, ...props }) =>
+              children ? (
+                <h2
+                  id={generateSlug(React.Children.toArray(children).join(""))}
+                  {...props}
+                >
+                  {children}
+                </h2>
+              ) : null,
+            h3: ({ children, ...props }) =>
+              children ? (
+                <h3
+                  id={generateSlug(React.Children.toArray(children).join(""))}
+                  {...props}
+                >
+                  {children}
+                </h3>
+              ) : null,
+            h4: ({ children, ...props }) =>
+              children ? (
+                <h4
+                  id={generateSlug(React.Children.toArray(children).join(""))}
+                  {...props}
+                >
+                  {children}
+                </h4>
+              ) : null,
+            code: ({ children, className }) =>
+              className === "language-mermaid" ? (
+                <RenderMermaid>{children}</RenderMermaid>
+              ) : (
+                <RenderCodeBlock className={className}>
+                  {children}
+                </RenderCodeBlock>
+              ),
+            table: ({ children }) => (
+              <div className="overflow-x-auto p-4">
+                <table className="min-w-full table-auto border-collapse border border-gray-200">
+                  {children}
+                </table>
+              </div>
+            ),
+            tr: ({ children }) => (
+              <tr className="border-t border-gray-200">{children}</tr>
+            ),
+            th: ({ children }) => (
+              <th className="px-4 py-2 text-left font-bold">{children}</th>
+            ),
+            td: ({ children }) => <td className="px-4 py-2">{children}</td>,
+            span: ({ ...props }) => <span {...props} />,
+          }}
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+
   const fetchFile = async (filename: string) => {
-    const res = await fetch(`http://localhost:5000/articles/hello.mdx`);
+    const res = await fetch(`http://localhost:5000/articles/hello.md`);
     if (!res.ok) throw new Error("Failed to fetch file");
     return await res.text(); // backend sends raw markdown
+  };
+
+  const startEdit = () => {
+    setDraft(content);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setDraft("");
+  };
+
+  const save = async () => {
+    try {
+      setSaving(true);
+      const res = await fetch(`http://localhost:5000/articles/hello`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: "hello", content: draft }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setContent(draft);
+      setIsEditing(false);
+    } catch (error) {
+      alert(`Save failed: ${error}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const parseArticle = async () => {
@@ -51,7 +150,7 @@ const Article = ({ filePath }: { filePath: string }) => {
 
   useEffect(() => {
     // get article content
-    fetchFile("hello.mdx").then(setContent).catch(console.error);
+    fetchFile("hello.md").then(setContent).catch(console.error);
 
     parseArticle().catch((error) => {
       console.log(error);
@@ -90,69 +189,44 @@ const Article = ({ filePath }: { filePath: string }) => {
         </div>
       </div>
       <div id="article" className="p-8">
-        <div>
-          <ReactMarkdown
-            components={{
-              h1: () => (
-                <h1 className="text-center">{`(${category}) ${articleName}`}</h1>
-              ),
-              h2: ({ children, ...props }) =>
-                children ? (
-                  <h2
-                    id={generateSlug(React.Children.toArray(children).join(""))}
-                    {...props}
-                  >
-                    {children}
-                  </h2>
-                ) : null,
-              h3: ({ children, ...props }) =>
-                children ? (
-                  <h3
-                    id={generateSlug(React.Children.toArray(children).join(""))}
-                    {...props}
-                  >
-                    {children}
-                  </h3>
-                ) : null,
-              h4: ({ children, ...props }) =>
-                children ? (
-                  <h4
-                    id={generateSlug(React.Children.toArray(children).join(""))}
-                    {...props}
-                  >
-                    {children}
-                  </h4>
-                ) : null,
-              code: ({ children, className }) =>
-                className === "language-mermaid" ? (
-                  <RenderMermaid>{children}</RenderMermaid>
-                ) : (
-                  <RenderCodeBlock className={className}>
-                    {children}
-                  </RenderCodeBlock>
-                ),
-              table: ({ children }) => (
-                <div className="overflow-x-auto p-4">
-                  <table className="min-w-full table-auto border-collapse border border-gray-200">
-                    {children}
-                  </table>
-                </div>
-              ),
-              tr: ({ children }) => (
-                <tr className="border-t border-gray-200">{children}</tr>
-              ),
-              th: ({ children }) => (
-                <th className="px-4 py-2 text-left font-bold">{children}</th>
-              ),
-              td: ({ children }) => <td className="px-4 py-2">{children}</td>,
-              span: ({ ...props }) => <span {...props} />,
-            }}
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
+        <div>{renderArticle}</div>
+      </div>
+      <div className="flex gap-2 p-2">
+        {isEditing ? (
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full h-[70vh] font-mono text-sm p-3 border rounded-lg bg-white"
+            spellCheck={false}
+          />
+        ) : (
+          <div>{renderArticle}</div>
+        )}
+        {!isEditing ? (
+          <button
+            onClick={startEdit}
+            className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60"
           >
-            {content}
-          </ReactMarkdown>
-        </div>
+            Edit
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60 disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={cancelEdit}
+              disabled={saving}
+              className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </>
+        )}
       </div>
       <div className="lg:hidden"> </div>
       <div>

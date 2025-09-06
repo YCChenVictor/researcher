@@ -61,7 +61,7 @@ const generateRandomColors = (num: number) => {
 app.use(
   cors({
     origin: process.env.FRONTEND_BASE_URL,
-    methods: ["GET", "POST", "PATCH", "OPTIONS"],
+    methods: ["PUT", "GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
     credentials: true,
   }),

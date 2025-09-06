@@ -33,7 +33,6 @@ export default class GitHubClient {
     this.branch = branch;
   }
 
-  /** Create or update an article at posts/{filename} */
   async upsert(
     filename: string,
     markdown: string,
@@ -41,7 +40,6 @@ export default class GitHubClient {
   ) {
     const filePath = `posts/${filename}`;
 
-    // check if file exists to supply sha for update
     let sha: string | undefined;
     try {
       const { data } = await this.octokit.request(
@@ -72,10 +70,11 @@ export default class GitHubClient {
       },
     );
 
+    console.log("zxcvxzcvxzcvxzcv")
+
     return data;
   }
 
-  /** List .mdx files in posts/ */
   async list(): Promise<ArticleFile[]> {
     const { data } = await this.octokit.request(
       "GET /repos/{owner}/{repo}/contents/{path}",
@@ -84,7 +83,7 @@ export default class GitHubClient {
 
     if (!Array.isArray(data)) return [];
     return data
-      .filter((i) => i.type === "file" && i.name.endsWith(".mdx"))
+      .filter((i) => i.type === "file" && i.name.endsWith(".md"))
       .map((i) => ({ name: i.name, path: i.path, sha: i.sha, size: i.size }));
   }
 

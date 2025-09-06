@@ -2,7 +2,7 @@ import React from "react";
 import { Sidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { HashLink } from "react-router-hash-link";
 
-import WordCounts from "./WordCounts";
+import WordCounts from "../WordCounts";
 
 const SidebarLayout = ({
   isCollapsed,
