@@ -12,7 +12,14 @@ import LinkPage from "../LinkPage";
 import nodeStructure from "../../node-structure.json";
 import remarkGfm from "remark-gfm";
 
-const Article = () => {
+const btn =
+  "inline-flex h-9 items-center gap-1 rounded-lg border px-3 text-sm font-medium transition-colors " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 " +
+  "disabled:opacity-50 disabled:cursor-not-allowed";
+const btnGhost = `${btn} border-slate-300 bg-white text-slate-700 hover:bg-slate-50`;
+const btnPrimary = `${btn} border-transparent bg-slate-900 text-white hover:bg-slate-800`;
+
+const Article = ({ filePath }: { filePath: string }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -97,10 +104,14 @@ const Article = () => {
     </div>
   );
 
-  const fetchFile = async (filename: string) => {
-    const res = await fetch(`http://localhost:5000/articles/hello.md`);
+  const fetchFile = async () => {
+    console.log("zxvxzzvxczcvx")
+    const url = `${process.env.REACT_APP_BACKEND_URL}/articles/content?file=${encodeURIComponent(filePath)}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch file");
-    return await res.text(); // backend sends raw markdown
+
+    const text = await res.text();
+    return JSON.parse(text).content;
   };
 
   const startEdit = () => {
@@ -116,13 +127,15 @@ const Article = () => {
   const save = async () => {
     try {
       setSaving(true);
-      const res = await fetch(`http://localhost:5000/articles/hello`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: "hello", content: draft }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/articles/content?path=${encodeURIComponent(filePath)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: "testing", content }),
+        },
+      );
       if (!res.ok) throw new Error(await res.text());
-      setContent(draft);
       setIsEditing(false);
     } catch (error) {
       alert(`Save failed: ${error}`);
@@ -150,7 +163,7 @@ const Article = () => {
 
   useEffect(() => {
     // get article content
-    fetchFile("hello.md").then(setContent).catch(console.error);
+    fetchFile().then(setContent).catch(console.error);
 
     parseArticle().catch((error) => {
       console.log(error);
@@ -188,9 +201,6 @@ const Article = () => {
           </div>
         </div>
       </div>
-      <div id="article" className="p-8">
-        <div>{renderArticle}</div>
-      </div>
       <div className="flex gap-2 p-2">
         {isEditing ? (
           <textarea
@@ -202,31 +212,31 @@ const Article = () => {
         ) : (
           <div>{renderArticle}</div>
         )}
-        {!isEditing ? (
-          <button
-            onClick={startEdit}
-            className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60"
-          >
-            Edit
-          </button>
-        ) : (
-          <>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60 disabled:opacity-60"
-            >
-              {saving ? "Saving..." : "Save"}
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <button onClick={startEdit} className={btnGhost}>
+              Edit
             </button>
-            <button
-              onClick={cancelEdit}
-              disabled={saving}
-              className="rounded-lg border px-3 py-1 shadow-sm hover:bg-white/60 disabled:opacity-60"
-            >
-              Cancel
-            </button>
-          </>
-        )}
+          ) : (
+            <>
+              <button
+                onClick={save}
+                disabled={saving}
+                className={`${btnPrimary} min-w-[5.5rem]`} // prevents width jump
+                aria-busy={saving}
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={cancelEdit}
+                disabled={saving}
+                className={btnGhost}
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
       </div>
       <div className="lg:hidden"> </div>
       <div>

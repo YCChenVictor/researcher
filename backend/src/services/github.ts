@@ -35,7 +35,7 @@ export default class GitHubClient {
 
   async upsert(
     filename: string,
-    markdown: string,
+    content: string,
     message = `upsert ${filename}`,
   ) {
     const filePath = `posts/${filename}`;
@@ -65,7 +65,7 @@ export default class GitHubClient {
         message,
         branch: this.branch,
         committer: { name: "Your Name", email: "you@example.com" },
-        content: Buffer.from(markdown, "utf8").toString("base64"),
+        content: Buffer.from(content, "utf8").toString("base64"),
         sha, // present only when updating
       },
     );
@@ -76,18 +76,20 @@ export default class GitHubClient {
   async list(): Promise<ArticleFile[]> {
     const { data } = await this.octokit.request(
       "GET /repos/{owner}/{repo}/contents/{path}",
-      { owner: this.owner, repo: this.repo, path: "posts", ref: this.branch },
+      { owner: this.owner, repo: this.repo, path: "", ref: this.branch },
     );
-
+    
     if (!Array.isArray(data)) return [];
-    return data
+
+    const result = data
       .filter((i) => i.type === "file" && i.name.endsWith(".md"))
       .map((i) => ({ name: i.name, path: i.path, sha: i.sha, size: i.size }));
+
+    return result
   }
 
   /** Get raw markdown text of one article */
-  async get(filename: string): Promise<string> {
-    const filePath = `posts/${filename}`;
+  async get(filePath: string): Promise<string> {
     const { data } = await this.octokit.request(
       "GET /repos/{owner}/{repo}/contents/{path}",
       { owner: this.owner, repo: this.repo, path: filePath, ref: this.branch },
