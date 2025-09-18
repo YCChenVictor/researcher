@@ -30,14 +30,12 @@ export default function List({
       setLoading(true);
       setErr(null);
       const res = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(
-          dir,
-        )}?ref=${encodeURIComponent(branch)}`,
+        `http://localhost:5000/articles`,
       );
       if (!res.ok)
         throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
       const data: Item[] = await res.json();
-      setItems(data.filter((i) => i.type === "file" && i.name.endsWith(".md")));
+      setItems(data);
     } catch (error) {
       setErr("Failed to load");
     } finally {
@@ -52,9 +50,7 @@ export default function List({
   const destroy = async (item: Item) => {
     if (!window.confirm(`Delete ${item.name}?`)) return;
     try {
-      const res = await fetch(
-        `http://localhost:5000/articles/destroy`,
-        {
+      const res = await fetch(`http://localhost:5000/articles/destroy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: item.name, sha: item.sha }),
