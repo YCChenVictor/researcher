@@ -8,8 +8,8 @@ import SidebarLayout from "./SidebarLayout";
 import RenderCodeBlock from "../RenderCodeBlock";
 import RenderMermaid from "../RenderMermaid";
 import ScrollToTopButton from "../ScrollToTopButton";
-import LinkPage from "../LinkPage";
-import nodeStructure from "../../node-structure.json";
+// import LinkPage from "../LinkPage";
+// import nodeStructure from "../../node-structure.json";
 import remarkGfm from "remark-gfm";
 
 const btn =
@@ -106,7 +106,7 @@ const Article = ({ filePath }: { filePath: string }) => {
 
   const fetchFile = async () => {
     console.log("zxvxzzvxczcvx")
-    const url = `${process.env.REACT_APP_BACKEND_URL}/articles/content?file=${encodeURIComponent(filePath)}`;
+    const url = `${process.env.VITE_APP_BACKEND_URL}/articles/content?file=${encodeURIComponent(filePath)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch file");
 
@@ -138,7 +138,7 @@ const Article = ({ filePath }: { filePath: string }) => {
       if (!res.ok) throw new Error(await res.text());
       setIsEditing(false);
     } catch (error) {
-      alert(`Save failed: ${error}`);
+      window.alert(`Save failed: ${error}`);
     } finally {
       setSaving(false);
     }
@@ -147,7 +147,7 @@ const Article = ({ filePath }: { filePath: string }) => {
   const parseArticle = async () => {
     try {
       const parsedHTML = await marked.parse(content);
-      const container = document.createElement("div");
+      const container = window.document.createElement("div");
       container.innerHTML = parsedHTML;
       const tags = Array.from(
         container.querySelectorAll("h2, h3, h4, h5, h6"),

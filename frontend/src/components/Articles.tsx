@@ -8,7 +8,7 @@ type Articles = {
   content: string;
 }[];
 
-const Articles = ({ articles }: { articles: Articles }) => {
+const ArticlesComponent = ({ articles }: { articles: Articles }) => {
   const grouped: Record<string, string[]> = {};
   for (const article of articles) {
     const parts = article.url.split("/");
@@ -52,4 +52,4 @@ const Articles = ({ articles }: { articles: Articles }) => {
   );
 };
 
-export default Articles;
+export default ArticlesComponent;
