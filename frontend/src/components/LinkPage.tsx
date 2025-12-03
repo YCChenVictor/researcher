@@ -73,7 +73,7 @@ const LinkPage = ({ self, parents, children, allNodes }: LinkPageProps) => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={async () => {
-                  const backendUrl = process.env.REACT_APP_BACKEND_URL ?? "";
+                  const backendUrl = process.env.VITE_APP_BACKEND_URL ?? "";
                   try {
                     await fetch(backendUrl + "/add-links", {
                       method: "PATCH",

@@ -1,19 +1,14 @@
 import React from "react";
 import ForceGraph from "./ForceGraph";
 import SearchBar from "./SearchBar";
-import AuthorProfile from "./AuthorProfile";
 
 interface MainProps {
-  articles: { url: string; content: string }[]; // Replace 'any' with the actual article type if available
-  serverOn: boolean;
+  articles: { url: string; content: string }[];
 }
 
 const Main: React.FC<MainProps> = ({ articles }) => {
   return (
     <>
-      <div className="lg:w-1/3  p-4">
-        <AuthorProfile />
-      </div>
       <div className=" w-full lg:w-2/3 bg-gray-600">
         <div className="space-y-4">
           {/* Flex container for SearchBar and Articles button */}

@@ -36,7 +36,7 @@ export default function List({
         throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
       const data: Item[] = await res.json();
       setItems(data);
-    } catch (error) {
+    } catch {
       setErr("Failed to load");
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export default function List({
       });
       if (!res.ok) throw new Error(await res.text());
       await fetchItems(); // refresh list
-    } catch (e) {
+    } catch {
       alert("Failed to delete file");
     }
   };
