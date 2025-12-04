@@ -1,18 +1,17 @@
-// src/swagger/zodSpec.ts
-import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+
 import { z } from "./zod";
 import { helloWorldResponseSchema } from "../schema/helloWorld";
-
-const registry = new OpenAPIRegistry();
+import "./decompose";
+import { registry } from "./registry";
 
 registry.registerPath({
   method: "get",
   path: "/",
   summary: "Hello world",
   request: {
-    // optional, just to show usage
     query: z.object({
-      name: z.string().optional(),
+      name: z.string(),
     }),
   },
   responses: {
@@ -29,10 +28,10 @@ registry.registerPath({
 
 const generator = new OpenApiGeneratorV3(registry.definitions);
 
-export const zodSpec = generator.generateDocument({
+export const spec = generator.generateDocument({
   openapi: "3.0.0",
   info: {
-    title: "Test API (zod-to-openapi)",
+    title: "Researcher",
     version: "1.0.0",
   },
 });

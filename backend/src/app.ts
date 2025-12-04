@@ -7,22 +7,25 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import nodeGraphRouter from "./routers/nodeGraphRouter";
 import article from "./routers/article";
+import { spec } from "./swagger/spec";
 
-import { zodSpec } from "./swagger/spec";
+import decomposeRouter from "./routers/decompose";
+
+const nodesStructurePath = "../blog-frontend/src/node-structure.json";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 const app = express();
 
-const nodesStructurePath = "../blog-frontend/src/node-structure.json";
-
 app.use(express.json());
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(zodSpec));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(spec));
 
 app.get("/", (_req, res) => {
   res.json({ message: "hello world" });
 });
+
+app.use("/decompose", decomposeRouter);
 
 const readNodesStructure = (dir: string) => {
   const nodesStructure = fs.readFileSync(dir, "utf8");
