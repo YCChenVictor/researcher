@@ -78,14 +78,14 @@ export default class GitHubClient {
       "GET /repos/{owner}/{repo}/contents/{path}",
       { owner: this.owner, repo: this.repo, path: "", ref: this.branch },
     );
-    
+
     if (!Array.isArray(data)) return [];
 
     const result = data
       .filter((i) => i.type === "file" && i.name.endsWith(".md"))
       .map((i) => ({ name: i.name, path: i.path, sha: i.sha, size: i.size }));
 
-    return result
+    return result;
   }
 
   /** Get raw markdown text of one article */
@@ -113,7 +113,7 @@ export default class GitHubClient {
       { owner: this.owner, repo: this.repo, path: filePath, ref: this.branch },
     );
 
-    console.log(data)
+    console.log(data);
 
     const sha = Array.isArray(data) ? "" : data.sha;
     if (!sha) throw new Error("File not found or sha missing");

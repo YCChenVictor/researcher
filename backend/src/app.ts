@@ -1,10 +1,14 @@
 import express from "express";
-import nodeGraphRouter from "./routers/nodeGraphRouter";
-import article from "./routers/article";
 import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+
+import swaggerUi from "swagger-ui-express";
+import nodeGraphRouter from "./routers/nodeGraphRouter";
+import article from "./routers/article";
+
+import { zodSpec } from "./swagger/spec";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
@@ -13,6 +17,12 @@ const app = express();
 const nodesStructurePath = "../blog-frontend/src/node-structure.json";
 
 app.use(express.json());
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(zodSpec));
+
+app.get("/", (_req, res) => {
+  res.json({ message: "hello world" });
+});
 
 const readNodesStructure = (dir: string) => {
   const nodesStructure = fs.readFileSync(dir, "utf8");

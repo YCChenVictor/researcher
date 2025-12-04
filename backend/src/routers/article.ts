@@ -42,7 +42,7 @@ router.get("/", async (_req, res) => {
 });
 
 router.get("/content", async (req, res) => {
-  console.log("xvxczvzxzvxc")
+  console.log("xvxczvzxzvxc");
   try {
     const filePath = String(req.query.file || "");
     if (!filePath) {
@@ -75,16 +75,16 @@ router.put("/content", async (req, res) => {
     if (raw.includes("..")) return res.status(400).json({ error: "Bad path" });
 
     const filename = raw.endsWith(".md") ? raw : `${raw}.md`;
-    console.log("zxvcxzcvzvxc")
-    console.log(filename)
+    console.log("zxvcxzcvzvxc");
+    console.log(filename);
     const { title = "", content = "" } = req.body || {};
     const slug = filename.replace(/\.md$/, "");
 
     const md =
-`---\n` +
-`title: "${String(title).replace(/"/g, '\\"')}"\n` +
-`slug: "${slug}"\n` +
-`---\n\n${content}\n`;
+      `---\n` +
+      `title: "${String(title).replace(/"/g, '\\"')}"\n` +
+      `slug: "${slug}"\n` +
+      `---\n\n${content}\n`;
 
     await gh.upsert(filename, md);
     res.json({ ok: true, path: filename });
