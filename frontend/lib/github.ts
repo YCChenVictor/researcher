@@ -21,16 +21,24 @@ if (!repo) throw new Error("Missing GITHUB_REPO in env");
 
 const octokit = new Octokit({ auth: token });
 
-const assertRepoAndBranchExist = async (): Promise<void> => {
+let repoChecked = false;
+
+const assertRepoAndBranchExist = async () => {
+  if (repoChecked) return;
+
   await octokit.request("GET /repos/{owner}/{repo}", { owner, repo });
   await octokit.request("GET /repos/{owner}/{repo}/branches/{branch}", {
     owner,
     repo,
     branch,
   });
+
+  repoChecked = true;
 };
 
 const get = async (filePath: string): Promise<string> => {
+  await assertRepoAndBranchExist()
+
   const { data } = await octokit.request(
     "GET /repos/{owner}/{repo}/contents/{path}",
     { owner: owner, repo: repo, path: filePath, ref: branch },
@@ -94,6 +102,8 @@ const createPost = async (
   content: string,
   message = `create ${filename}`,
 ) => {
+  await assertRepoAndBranchExist()
+
   const filePath = `posts/${filename}`;
 
   const existingSha = await getFileSha(filePath);

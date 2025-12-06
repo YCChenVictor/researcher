@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-import { handleAddNodeAt } from "../features/nodes";
-import { Node, Link } from "../types/nodes"
+import { handleAddNodeAt } from "./features/nodes";
 
 const ForceGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -262,14 +261,21 @@ const ForceGraph: React.FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "100vh" }}>
-      <svg
-        ref={svgRef}
-        data-testid="force-graph-svg"
-        style={{ width: "100%", height: "100%" }}
-      />
+  <div
+    ref={containerRef}
+    className="relative w-full h-[70vh] rounded-xl border border-slate-200 bg-slate-600 text-slate-100 overflow-hidden"
+  >
+    <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-2 text-xs text-slate-300 bg-slate-900/70 backdrop-blur">
+      <span className="font-semibold tracking-wide">ForceGraph</span>
     </div>
-  );
+
+    <svg
+      ref={svgRef}
+      data-testid="force-graph-svg"
+      className="w-full h-full"
+    />
+  </div>
+);
 };
 
-export default ForceGraph;
+export default ForceGraph

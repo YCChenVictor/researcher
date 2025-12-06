@@ -1,6 +1,6 @@
 import { z } from "./zod";
 import { registry } from "./registry";
-import { decomposeBody } from "../schema/decompose";
+import { decomposeBody } from "../schemas/decompose";
 
 const DecomposeResponseSchema = registry.register(
   "DecomposeResponse",

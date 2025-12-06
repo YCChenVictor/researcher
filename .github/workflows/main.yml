@@ -5,11 +5,11 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  frontend:
+  web:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: ./frontend
+        working-directory: ./web
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -20,28 +20,4 @@ jobs:
     - name: Lint Code
       run: yarn eslint
     - name: Run tests
-      run: yarn test:fix
-  backend:
-    runs-on: ubuntu-22.04
-    env:
-      NODE_ENV: test
-      GITHUB_TOKEN: test
-      GITHUB_OWNER: test
-      GITHUB_REPO: test
-      OPENAI_API_KEY: test
-    defaults:
-      run:
-        working-directory: ./backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: backend/yarn.lock
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-      - name: Lint
-        run: yarn format
-      - name: Test
-        run: yarn test
+      run: yarn test

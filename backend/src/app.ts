@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 
 import swaggerUi from "swagger-ui-express";
-import nodeGraphRouter from "./routers/nodeGraphRouter";
+import nodeRouter from "./routers/node";
 import article from "./routers/article";
 import { spec } from "./swagger/spec";
 
@@ -222,7 +222,7 @@ app.get("/", (req, res) => {
 });
 
 // node graph
-app.use("/node-graph", nodeGraphRouter);
+app.use("/nodes", nodeRouter);
 
 app.use("/articles", article);
 

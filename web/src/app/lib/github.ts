@@ -1,8 +1,4 @@
 import { Octokit } from "octokit";
-import dotenv from "dotenv";
-import path from "path";
-
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 interface ArticleFile {
   name: string;
@@ -21,16 +17,24 @@ if (!repo) throw new Error("Missing GITHUB_REPO in env");
 
 const octokit = new Octokit({ auth: token });
 
-const assertRepoAndBranchExist = async (): Promise<void> => {
+let repoChecked = false;
+
+const assertRepoAndBranchExist = async () => {
+  if (repoChecked) return;
+
   await octokit.request("GET /repos/{owner}/{repo}", { owner, repo });
   await octokit.request("GET /repos/{owner}/{repo}/branches/{branch}", {
     owner,
     repo,
     branch,
   });
+
+  repoChecked = true;
 };
 
 const get = async (filePath: string): Promise<string> => {
+  await assertRepoAndBranchExist()
+
   const { data } = await octokit.request(
     "GET /repos/{owner}/{repo}/contents/{path}",
     { owner: owner, repo: repo, path: filePath, ref: branch },
@@ -88,60 +92,21 @@ const put = async (params: {
   return data;
 };
 
+const upsert = async (params: {
+  filePath: string;
+  content: string;
+  message?: string;
+}) => {
+  const { filePath, content, message } = params;
 
-const createPost = async (
-  filename: string,
-  content: string,
-  message = `create ${filename}`,
-) => {
-  const filePath = `posts/${filename}`;
+  const sha = await getFileSha(filePath);
 
-  const existingSha = await getFileSha(filePath);
-  if (existingSha) {
-    throw new Error(`File ${filePath} already exists`);
-  }
-
-  return put({ filePath, content, message });
-};
-
-const upsert = async (
-  filename: string,
-  content: string,
-  message = `upsert ${filename}`,
-) => {
-  const filePath = `posts/${filename}`;
-
-  let sha: string | undefined;
-  try {
-    const { data } = await octokit.request(
-      "GET /repos/{owner}/{repo}/contents/{path}",
-      {
-        owner: owner,
-        repo: repo,
-        path: filePath,
-        ref: branch,
-      },
-    );
-    if (typeof data === "object" && "sha" in data) sha = data.sha;
-  } catch {
-    // 404 → create new
-  }
-
-  const { data } = await octokit.request(
-    "PUT /repos/{owner}/{repo}/contents/{path}",
-    {
-      owner: owner,
-      repo: repo,
-      path: filePath,
-      message,
-      branch: branch,
-      committer: { name: "Your Name", email: "you@example.com" },
-      content: Buffer.from(content, "utf8").toString("base64"),
-      sha, // present only when updating
-    },
-  );
-
-  return data;
+  return put({
+    filePath,
+    content,
+    message: message ?? (sha ? `Update ${filePath}` : `Create ${filePath}`),
+    ...(sha ? { sha } : {}),
+  });
 };
 
 const list = async (): Promise<ArticleFile[]> => {
@@ -184,4 +149,4 @@ const destroy = async (filename: string): Promise<void> => {
   });
 };
 
-export { assertRepoAndBranchExist, createPost, upsert, list, get, destroy };
+export { assertRepoAndBranchExist, upsert, list, get, destroy };
