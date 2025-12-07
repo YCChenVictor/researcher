@@ -30,3 +30,9 @@ yarn-error.log*
 env/
 
 node_modules
+
+.vercel/
+
+.DS_Store
+
+coverage/
