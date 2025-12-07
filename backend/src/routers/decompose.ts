@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 
 import { call } from "../services/llm/call";
-import { decomposeBody } from "../schema/decompose";
+import { decomposeBody } from "../schemas/decompose";
 import { validateBody } from "../middleware/validation";
 import buildMessage from "../services/llm/message";
 

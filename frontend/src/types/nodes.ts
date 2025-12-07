@@ -1,9 +1,8 @@
-import { SimulationNodeDatum } from "d3";
+import { SimulationLinkDatum, SimulationNodeDatum } from "d3";
 
 interface Node extends SimulationNodeDatum {
   key: string;
   name: string;
-  group: string;
   color: string;
   x?: number;
   y?: number;
@@ -11,10 +10,10 @@ interface Node extends SimulationNodeDatum {
   fy?: number;
 }
 
-interface Link {
-  source: string;
-  target: string;
-}
+type Link = SimulationLinkDatum<Node> & {
+  source: Node | string;
+  target: Node | string;
+};
 
 type RawLinks = Record<
   string,
