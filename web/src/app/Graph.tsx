@@ -1,16 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 import {
+  persistGraph,
   handleAddNodeAt,
   handleNodeClickLogic,
-  createShowContextMenu,
-} from "./features/nodes";
-import { Node, Link } from "./types/graph";
+  fetchGraph,
+  setupSvg,
+  createSimulation,
+  createDrag,
+  renderLinks,
+  positionLinksOnTick,
+  buildChildren,
+  decompose,
+} from "./features/graph";
+import type { Node, Link } from "./types/graph";
+import NodeContextMenu from "./NodeContextMenu";
+
+type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
 
 const ForceGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  type MenuState = { node: Node; x: number; y: number } | null;
+  const [menu, setMenu] = useState<MenuState>(null);
+
+  // bridge React -> D3
+  const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
 
   useEffect(() => {
     const run = async () => {
@@ -19,197 +36,44 @@ const ForceGraph: React.FC = () => {
       let nodes: Node[] = [];
       let links: Link[] = [];
 
-      const res = await fetch("/api/graph");
-      if (res.ok) {
-        const { graph } = (await res.json()) as {
-          graph?: {
-            nodes: Node[];
-            links: { source: string; target: string }[];
-          };
-        };
-
-        if (graph) {
-          nodes = graph.nodes;
-          links = graph.links.map((l) => ({
-            source: l.source,
-            target: l.target,
-          }));
-        }
-      }
-
-      console.log(links);
+      const initial = await fetchGraph();
+      nodes = initial.nodes;
+      links = initial.links;
 
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
 
-      const svg = d3
-        .select<SVGSVGElement, unknown>(svgRef.current)
-        .attr("width", width)
-        .attr("height", height);
-
-      svg.selectAll("*").remove();
-
-      const zoomG = svg.append("g");
-      const linkGroup = zoomG.append("g");
-      const nodeGroup = zoomG.append("g");
-      const labelGroup = zoomG.append("g");
-
-      svg
-        .append("defs")
-        .append("marker")
-        .attr("id", "arrow")
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", 0)
-        .attr("markerWidth", 10)
-        .attr("markerHeight", 10)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("d", "M0,-5L10,0L0,5")
-        .attr("fill", "#999");
-
-      svg.call(
-        d3
-          .zoom<SVGSVGElement, unknown>()
-          .scaleExtent([0.1, 10])
-          .on("zoom", (event) => {
-            zoomG.attr("transform", event.transform);
-          }),
+      const { svg, zoomG, linkGroup, nodeGroup, labelGroup } = setupSvg(
+        svgRef.current,
+        width,
+        height,
       );
 
-      const simulation = d3
-        .forceSimulation<Node>(nodes)
-        .force(
-          "link",
-          d3
-            .forceLink<Node, Link>(links)
-            .id((d) => d.key)
-            .distance(80),
-        )
-        .force("charge", d3.forceManyBody().strength(-800))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide(20));
-
-      const drag = d3
-        .drag<SVGCircleElement, Node>()
-        .on("start", (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on("drag", (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on("end", (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = undefined;
-          d.fy = undefined;
-        });
+      const simulation = createSimulation(nodes, links, width, height);
+      const drag = createDrag(simulation);
 
       let selectedSource: Node | null = null;
 
-      let link = linkGroup
-        .selectAll<SVGLineElement, Link>("line")
-        .data(links)
-        .join("line")
-        .attr("stroke", "#999")
-        .attr("marker-end", "url(#arrow)");
-
+      let link = renderLinks(linkGroup, links);
       let node = nodeGroup.selectAll<SVGCircleElement, Node>("circle");
       let label = labelGroup.selectAll<SVGTextElement, Node>("text");
 
-      const updateNodeHighlight = () => {
+      function updateNodeHighlight() {
         node
           .attr("stroke", (d) => (d === selectedSource ? "#000" : null))
           .attr("stroke-width", (d) => (d === selectedSource ? 2 : 0));
-      };
+      }
 
-      const serializeLinks = (links: Link[]) =>
-        links.map((l) => ({
-          source: typeof l.source === "string" ? l.source : l.source.key,
-          target: typeof l.target === "string" ? l.target : l.target.key,
-        }));
-
-      const serializeNodes = (nodes: Node[]) =>
-        nodes.map(({ vx: _vx, vy: _vy, index: _index, ...rest }) => rest);
-
-      const persistGraph = () => {
-        const graph = {
-          nodes: serializeNodes(nodes),
-          links: serializeLinks(links),
-        };
-
-        void fetch("/api/graph", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ graph }),
-        }).catch((err) => console.error("Failed to persist graph", err));
-      };
-
-      const setSelectedSource = (nodeToSelect: Node | null) => {
+      function setSelectedSource(nodeToSelect: Node | null) {
         selectedSource = nodeToSelect;
         updateNodeHighlight();
-      };
+      }
 
-      const updateLinks = () => {
-        link = linkGroup
-          .selectAll<SVGLineElement, Link>("line")
-          .data(links)
-          .join("line")
-          .attr("stroke", "#999")
-          .attr("marker-end", "url(#arrow)");
-      };
+      function updateLinks() {
+        link = renderLinks(linkGroup, links);
+      }
 
-      const addNodeAt = (x: number, y: number) => {
-        handleAddNodeAt(x, y, {
-          nodes,
-          setNodes(next: Node[]) {
-            nodes = next;
-          },
-          simulation,
-          updateNodes,
-        });
-
-        persistGraph();
-      };
-
-      const addLink = (sourceNode: Node, targetNode: Node) => {
-        const newLink: Link = {
-          source: sourceNode.key,
-          target: targetNode.key,
-        };
-
-        console.log(newLink);
-
-        links = [...links, newLink];
-
-        const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
-        linkForce.id((d) => d.key); // important for string ids
-        linkForce.links(links);
-
-        updateLinks();
-        simulation.alpha(1).restart();
-
-        persistGraph();
-      };
-
-      const handleNodeClick = (event: MouseEvent, d: Node) => {
-        handleNodeClickLogic(event, d, selectedSource, {
-          setSelectedSource,
-          addLink, // now matches (Node, Node) => void
-        });
-      };
-
-      const showContextMenu = createShowContextMenu(zoomG);
-
-      const handleNodeContextMenu = (event: MouseEvent, d: Node) => {
-        event.preventDefault();
-        event.stopPropagation();
-        showContextMenu(d);
-      };
-
-      const updateNodes = () => {
+      function updateNodes() {
         node = node
           .data(nodes, (d) => d.key)
           .join(
@@ -242,7 +106,74 @@ const ForceGraph: React.FC = () => {
           );
 
         updateNodeHighlight();
+      }
+
+      function addNodeAt(x: number, y: number) {
+        handleAddNodeAt(x, y, {
+          nodes,
+          setNodes(next: Node[]) {
+            nodes = next;
+          },
+          simulation,
+          updateNodes,
+        });
+
+        persistGraph(nodes, links);
+      }
+
+      function addLink(sourceNode: Node, targetNode: Node) {
+        const newLink: Link = {
+          source: sourceNode.key,
+          target: targetNode.key,
+        };
+        links = [...links, newLink];
+
+        const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
+        linkForce.id((d) => d.key);
+        linkForce.links(links);
+
+        updateLinks();
+        simulation.alpha(1).restart();
+
+        persistGraph(nodes, links);
+      }
+
+      function handleNodeClick(event: MouseEvent, d: Node) {
+        handleNodeClickLogic(event, d, selectedSource, {
+          setSelectedSource,
+          addLink,
+        });
+      }
+
+      function handleNodeContextMenu(event: MouseEvent, d: Node) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (d.x == null || d.y == null || !svgRef.current) return;
+
+        const t = d3.zoomTransform(svgRef.current);
+        const x = t.applyX(d.x) + 12;
+        const y = t.applyY(d.y) - 12;
+
+        setMenu({ node: d, x, y });
+      }
+
+      const connectChildren: ConnectChildrenFn = (parent, titles) => {
+        const { newNodes, newLinks } = buildChildren(parent, titles);
+
+        nodes = [...nodes, ...newNodes];
+        links = [...links, ...newLinks];
+
+        simulation.nodes(nodes);
+        (simulation.force("link") as d3.ForceLink<Node, Link>).links(links);
+        simulation.alpha(1).restart();
+
+        persistGraph(nodes, links);
+        updateLinks();
+        updateNodes();
       };
+
+      connectChildrenRef.current = connectChildren;
 
       updateNodes();
 
@@ -261,28 +192,7 @@ const ForceGraph: React.FC = () => {
       });
 
       simulation.on("tick", () => {
-        link
-          .attr("x1", (d) =>
-            typeof d.source === "object" && "x" in d.source
-              ? ((d.source as Node).x ?? 0)
-              : 0,
-          )
-          .attr("y1", (d) =>
-            typeof d.source === "object" && "y" in d.source
-              ? ((d.source as Node).y ?? 0)
-              : 0,
-          )
-          .attr("x2", (d) =>
-            typeof d.target === "object" && "x" in d.target
-              ? ((d.target as Node).x ?? 0)
-              : 0,
-          )
-          .attr("y2", (d) =>
-            typeof d.target === "object" && "y" in d.target
-              ? ((d.target as Node).y ?? 0)
-              : 0,
-          );
-
+        positionLinksOnTick(link);
         node.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
         label.attr("x", (d) => d.x ?? 0).attr("y", (d) => (d.y ?? 0) - 14);
       });
@@ -291,6 +201,7 @@ const ForceGraph: React.FC = () => {
     run().catch((e) => console.error(e));
 
     return () => {
+      connectChildrenRef.current = null;
       if (svgRef.current) {
         d3.select(svgRef.current).selectAll("*").remove();
       }
@@ -311,6 +222,30 @@ const ForceGraph: React.FC = () => {
         data-testid="force-graph-svg"
         className="w-full h-full"
       />
+
+      {menu && (
+        <NodeContextMenu
+          x={menu.x}
+          y={menu.y}
+          onAction={async (action) => {
+            if (action === "close") {
+              setMenu(null);
+              return;
+            }
+
+            if (action === "decompose") {
+              try {
+                const titles = await decompose(menu.node);
+                connectChildrenRef.current?.(menu.node, titles);
+              } catch (err) {
+                console.error("Decompose error", err);
+              } finally {
+                setMenu(null);
+              }
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

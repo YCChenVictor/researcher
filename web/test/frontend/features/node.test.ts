@@ -1,18 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import * as d3 from "d3";
 
 import {
-  createShowContextMenu,
   handleNodeClickLogic,
   type NodeClickDeps,
-} from "../../../src/app/features/nodes";
-
-import { Node } from "../../../src/app/types/graph";
-
-type MenuItemDatum = {
-  label: string;
-  onClick: () => void;
-};
+} from "../../../src/app/features/graph";
 
 const makeEvent = (
   overrides: Partial<{ metaKey: boolean; ctrlKey: boolean }> = {},
@@ -89,44 +80,5 @@ describe("handleNodeClickLogic", () => {
     expect(addLink).toHaveBeenCalledWith(source, target);
     expect(setSelectedSource).toHaveBeenCalledWith(null);
     expect(openWindow).not.toHaveBeenCalled();
-  });
-});
-
-describe("showContextMenu", () => {
-  it("creates a context menu and logs on click", () => {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    document.body.appendChild(svg);
-
-    const zoomG = d3.select<SVGSVGElement, unknown>(svg).append("g");
-    const log = vi.fn();
-
-    const node: Node = {
-      key: "id-1",
-      name: "Node 1",
-      color: "#f00",
-      x: 100,
-      y: 50,
-    };
-
-    const showContextMenu = createShowContextMenu(zoomG, log);
-
-    showContextMenu(node);
-
-    const menus = zoomG.selectAll<SVGGElement, unknown>(".node-context-menu");
-    expect(menus.size()).toBe(1);
-
-    const texts = menus.selectAll<SVGTextElement, MenuItemDatum>("text");
-    expect(texts.size()).toBe(1);
-    expect(texts.text()).toBe("Decompose");
-
-    const textEl = texts.node();
-    expect(textEl).not.toBeNull();
-
-    textEl!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-    expect(log).toHaveBeenCalledWith("Decompose", node);
-    expect(
-      zoomG.selectAll<SVGGElement, unknown>(".node-context-menu").size(),
-    ).toBe(0);
   });
 });
