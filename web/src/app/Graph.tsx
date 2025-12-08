@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-import { handleAddNodeAt } from "./features/nodes";
+import {
+  handleAddNodeAt,
+  handleNodeClickLogic,
+  createShowContextMenu,
+} from "./features/nodes";
+// assume Node / Link types are available in scope
 
 const ForceGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -25,7 +30,6 @@ const ForceGraph: React.FC = () => {
 
         if (graph) {
           nodes = graph.nodes;
-          // if links are stored as ids
           links = graph.links.map((l) => ({
             source: l.source,
             target: l.target,
@@ -110,27 +114,18 @@ const ForceGraph: React.FC = () => {
         .attr("stroke", "#999")
         .attr("marker-end", "url(#arrow)");
 
-      let node = nodeGroup
-        .selectAll<SVGCircleElement, Node>("circle")
-        .data(nodes, (d) => d.key)
-        .join("circle")
-        .attr("r", 10)
-        .attr("fill", (d) => d.color)
-        .call(drag);
-
-      let label = labelGroup
-        .selectAll<SVGTextElement, Node>("text")
-        .data(nodes, (d) => d.key)
-        .join("text")
-        .text((d) => d.name)
-        .attr("font-size", 12)
-        .attr("fill", "#000")
-        .attr("text-anchor", "middle");
+      let node = nodeGroup.selectAll<SVGCircleElement, Node>("circle");
+      let label = labelGroup.selectAll<SVGTextElement, Node>("text");
 
       const updateNodeHighlight = () => {
         node
           .attr("stroke", (d) => (d === selectedSource ? "#000" : null))
           .attr("stroke-width", (d) => (d === selectedSource ? 2 : 0));
+      };
+
+      const setSelectedSource = (nodeToSelect: Node | null) => {
+        selectedSource = nodeToSelect;
+        updateNodeHighlight();
       };
 
       const updateLinks = () => {
@@ -140,41 +135,6 @@ const ForceGraph: React.FC = () => {
           .join("line")
           .attr("stroke", "#999")
           .attr("marker-end", "url(#arrow)");
-      };
-
-      const updateNodes = () => {
-        node = nodeGroup
-          .selectAll<SVGCircleElement, Node>("circle")
-          .data(nodes, (d) => d.key)
-          .join(
-            (enter) =>
-              enter
-                .append("circle")
-                .attr("r", 10)
-                .attr("fill", (d) => d.color)
-                .call(drag),
-            (update) => update,
-            (exit) => exit.remove(),
-          );
-
-        node.on("click", handleNodeClick);
-
-        label = labelGroup
-          .selectAll<SVGTextElement, Node>("text")
-          .data(nodes, (d) => d.key)
-          .join(
-            (enter) =>
-              enter
-                .append("text")
-                .text((d) => d.name)
-                .attr("font-size", 12)
-                .attr("fill", "#000")
-                .attr("text-anchor", "middle"),
-            (update) => update.text((d) => d.name),
-            (exit) => exit.remove(),
-          );
-
-        updateNodeHighlight();
       };
 
       const addNodeAt = (x: number, y: number) => {
@@ -206,37 +166,64 @@ const ForceGraph: React.FC = () => {
 
         links = [...links, newLink];
 
-        // update link force
         const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
         linkForce.links(links);
 
         updateLinks();
-
         simulation.alpha(1).restart();
       };
 
       const handleNodeClick = (event: MouseEvent, d: Node) => {
-        event.stopPropagation();
-
-        if (event.metaKey || event.ctrlKey) {
-          window.open(d.key, "_blank");
-          return;
-        }
-
-        if (!selectedSource) {
-          selectedSource = d;
-          updateNodeHighlight();
-        } else if (selectedSource === d) {
-          selectedSource = null;
-          updateNodeHighlight();
-        } else {
-          addLink(selectedSource, d);
-          selectedSource = null;
-          updateNodeHighlight();
-        }
+        handleNodeClickLogic(event, d, selectedSource, {
+          setSelectedSource,
+          addLink,
+        });
       };
 
-      node.on("click", handleNodeClick);
+      const showContextMenu = createShowContextMenu(zoomG);
+
+      const handleNodeContextMenu = (event: MouseEvent, d: Node) => {
+        event.preventDefault();
+        event.stopPropagation();
+        showContextMenu(d);
+      };
+
+      const updateNodes = () => {
+        node = node
+          .data(nodes, (d) => d.key)
+          .join(
+            (enter) =>
+              enter
+                .append("circle")
+                .attr("r", 10)
+                .attr("fill", (d) => d.color)
+                .call(drag),
+            (update) => update.call(drag),
+            (exit) => exit.remove(),
+          );
+
+        node
+          .on("click", handleNodeClick)
+          .on("contextmenu", handleNodeContextMenu);
+
+        label = label
+          .data(nodes, (d) => d.key)
+          .join(
+            (enter) =>
+              enter
+                .append("text")
+                .text((d) => d.name)
+                .attr("font-size", 12)
+                .attr("fill", "#000")
+                .attr("text-anchor", "middle"),
+            (update) => update.text((d) => d.name),
+            (exit) => exit.remove(),
+          );
+
+        updateNodeHighlight();
+      };
+
+      updateNodes();
 
       svg.on("click", (event) => {
         const target = event.target as HTMLElement;

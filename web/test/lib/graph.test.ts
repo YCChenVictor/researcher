@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   upsert,
+  get,
   githubClient,
   type GraphPayload,
 } from "../../src/app/lib/graph";
@@ -58,5 +59,50 @@ describe("upsert graph", () => {
         sha: "abc123",
       }),
     );
+  });
+});
+
+describe("get graph", () => {
+  it("returns parsed graph when file exists with content", async () => {
+    const encoded = Buffer.from(JSON.stringify(graph), "utf8").toString(
+      "base64",
+    );
+
+    getContentSpy.mockResolvedValueOnce({
+      data: { content: encoded },
+    });
+
+    const result = await get();
+
+    expect(getContentSpy).toHaveBeenCalled();
+    expect(result).toEqual(graph);
+  });
+
+  it("returns empty graph when data is an array", async () => {
+    getContentSpy.mockResolvedValueOnce({
+      data: [],
+    });
+
+    const result = await get();
+
+    expect(result).toEqual({ nodes: [], links: [] });
+  });
+
+  it("returns empty graph when content field is missing", async () => {
+    getContentSpy.mockResolvedValueOnce({
+      data: { something: "else" },
+    });
+
+    const result = await get();
+
+    expect(result).toEqual({ nodes: [], links: [] });
+  });
+
+  it("returns empty graph when getContent throws", async () => {
+    getContentSpy.mockRejectedValueOnce(new Error("boom"));
+
+    const result = await get();
+
+    expect(result).toEqual({ nodes: [], links: [] });
   });
 });
