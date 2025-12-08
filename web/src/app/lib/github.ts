@@ -33,7 +33,7 @@ const assertRepoAndBranchExist = async () => {
 };
 
 const get = async (filePath: string): Promise<string> => {
-  await assertRepoAndBranchExist()
+  await assertRepoAndBranchExist();
 
   const { data } = await octokit.request(
     "GET /repos/{owner}/{repo}/contents/{path}",
@@ -54,17 +54,17 @@ const encodeContent = (content: string) =>
 
 const getFileSha = async (filePath: string): Promise<string | null> => {
   const { data } = await octokit.request(
-      "GET /repos/{owner}/{repo}/contents/{path}",
-      {
-        owner,
-        repo,
-        path: filePath,
-        ref: branch,
-      },
-    );
+    "GET /repos/{owner}/{repo}/contents/{path}",
+    {
+      owner,
+      repo,
+      path: filePath,
+      ref: branch,
+    },
+  );
 
-    if (!Array.isArray(data) && "sha" in data) return data.sha;
-    return null;
+  if (!Array.isArray(data) && "sha" in data) return data.sha;
+  return null;
 };
 
 const put = async (params: {

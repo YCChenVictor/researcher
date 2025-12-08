@@ -3,7 +3,7 @@ import { Octokit } from "octokit";
 const token = process.env.GITHUB_TOKEN!;
 const owner = process.env.GITHUB_OWNER!;
 const repo = process.env.GITHUB_REPO!;
-const branch = process.env.GITHUB_BRANCH ?? "main"
+const branch = process.env.GITHUB_BRANCH ?? "main";
 
 export const githubClient = new Octokit({ auth: token });
 
@@ -54,13 +54,13 @@ async function upsert(graph: GraphPayload) {
       sha = res.data.sha;
     }
   } catch {
-    ""
+    ("");
   }
 
   const { data } = await githubClient.rest.repos.createOrUpdateFileContents({
     owner,
     repo,
-    path: GRAPH_PATH,                         // ← always this file
+    path: GRAPH_PATH, // ← always this file
     branch,
     message: sha ? "Update graph" : "Create graph",
     content: encodeContent(JSON.stringify(graph, null, 2)),
@@ -70,4 +70,4 @@ async function upsert(graph: GraphPayload) {
   return data;
 }
 
-export { get, upsert }
+export { get, upsert };
