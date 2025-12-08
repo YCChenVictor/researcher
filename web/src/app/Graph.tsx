@@ -14,6 +14,22 @@ const ForceGraph: React.FC = () => {
       let nodes: Node[] = [];
       let links: Link[] = [];
 
+      const res = await fetch("/api/graph");
+      if (res.ok) {
+        const { graph } = (await res.json()) as {
+          graph?: {
+            nodes: Node[];
+            links: { source: string; target: string }[];
+          };
+        };
+  
+        if (graph) {
+          nodes = graph.nodes;
+          // if links are stored as ids
+          links = graph.links.map((l) => ({ source: l.source, target: l.target }));
+        }
+      }
+
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
 
@@ -166,6 +182,16 @@ const ForceGraph: React.FC = () => {
           },
           simulation,
           updateNodes,
+        });
+
+        const graph = { nodes, links }; 
+
+        void fetch("/api/graph", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ graph }),
+        }).catch((err) => {
+          console.error("Failed to persist graph", err);
         });
       };
 

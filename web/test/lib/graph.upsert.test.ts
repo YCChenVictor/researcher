@@ -31,7 +31,7 @@ describe("upsert graph", () => {
 
     expect(createOrUpdateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        path: "nodes/graph.json",
+        path: "graph.json",
         message: "Create graph",
       }),
     );
@@ -51,7 +51,7 @@ describe("upsert graph", () => {
 
     expect(createOrUpdateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        path: "nodes/graph.json",
+        path: "graph.json",
         message: "Update graph",
         sha: "abc123",
       }),

@@ -35,14 +35,6 @@ const handleAddNodeAt = (
 
   // persist full graph (nodes + links)
   const graph = { nodes: nextNodes, links };
-
-  void fetch("/api/graph", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ graph }),
-  }).catch((err) => {
-    console.error("Failed to persist graph", err);
-  });
 };
 
 export { handleAddNodeAt }
