@@ -58,7 +58,7 @@ describe("POST /api/graph", () => {
     const res = await POST(req);
     expect(res.status).toBe(400);
 
-    const json = (await res.json());
+    const json = await res.json();
     expect(json.error).toBe("graph is required");
   });
 
@@ -76,7 +76,7 @@ describe("POST /api/graph", () => {
     const res = await POST(req);
     expect(res.status).toBe(201);
 
-    const json = (await res.json());
+    const json = await res.json();
     expect(json).toEqual(graph);
 
     expect(mockedUpsert).toHaveBeenCalledWith(graph);

@@ -22,11 +22,14 @@ const ForceGraph: React.FC = () => {
             links: { source: string; target: string }[];
           };
         };
-  
+
         if (graph) {
           nodes = graph.nodes;
           // if links are stored as ids
-          links = graph.links.map((l) => ({ source: l.source, target: l.target }));
+          links = graph.links.map((l) => ({
+            source: l.source,
+            target: l.target,
+          }));
         }
       }
 
@@ -184,7 +187,7 @@ const ForceGraph: React.FC = () => {
           updateNodes,
         });
 
-        const graph = { nodes, links }; 
+        const graph = { nodes, links };
 
         void fetch("/api/graph", {
           method: "POST",
@@ -253,22 +256,22 @@ const ForceGraph: React.FC = () => {
         link
           .attr("x1", (d) =>
             typeof d.source === "object" && "x" in d.source
-              ? (d.source as Node).x ?? 0
+              ? ((d.source as Node).x ?? 0)
               : 0,
           )
           .attr("y1", (d) =>
             typeof d.source === "object" && "y" in d.source
-              ? (d.source as Node).y ?? 0
+              ? ((d.source as Node).y ?? 0)
               : 0,
           )
           .attr("x2", (d) =>
             typeof d.target === "object" && "x" in d.target
-              ? (d.target as Node).x ?? 0
+              ? ((d.target as Node).x ?? 0)
               : 0,
           )
           .attr("y2", (d) =>
             typeof d.target === "object" && "y" in d.target
-              ? (d.target as Node).y ?? 0
+              ? ((d.target as Node).y ?? 0)
               : 0,
           );
 
@@ -287,21 +290,21 @@ const ForceGraph: React.FC = () => {
   }, []);
 
   return (
-  <div
-    ref={containerRef}
-    className="relative w-full h-[70vh] rounded-xl border border-slate-200 bg-slate-600 text-slate-100 overflow-hidden"
-  >
-    <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-2 text-xs text-slate-300 bg-slate-900/70 backdrop-blur">
-      <span className="font-semibold tracking-wide">ForceGraph</span>
-    </div>
+    <div
+      ref={containerRef}
+      className="relative w-full h-[70vh] rounded-xl border border-slate-200 bg-slate-600 text-slate-100 overflow-hidden"
+    >
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-2 text-xs text-slate-300 bg-slate-900/70 backdrop-blur">
+        <span className="font-semibold tracking-wide">ForceGraph</span>
+      </div>
 
-    <svg
-      ref={svgRef}
-      data-testid="force-graph-svg"
-      className="w-full h-full"
-    />
-  </div>
-);
+      <svg
+        ref={svgRef}
+        data-testid="force-graph-svg"
+        className="w-full h-full"
+      />
+    </div>
+  );
 };
 
-export default ForceGraph
+export default ForceGraph;

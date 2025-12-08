@@ -1,6 +1,10 @@
 // test/lib/graph.upsert.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { upsert, githubClient, type GraphPayload } from "../../src/app/lib/graph";
+import {
+  upsert,
+  githubClient,
+  type GraphPayload,
+} from "../../src/app/lib/graph";
 
 const graph: GraphPayload = {
   nodes: [{ id: "n1" }],
@@ -12,9 +16,7 @@ let createOrUpdateSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   // reset spies each test
-  getContentSpy = vi
-    .spyOn(githubClient.rest.repos, "getContent")
-    .mockReset();
+  getContentSpy = vi.spyOn(githubClient.rest.repos, "getContent").mockReset();
   createOrUpdateSpy = vi
     .spyOn(githubClient.rest.repos, "createOrUpdateFileContents")
     .mockReset();

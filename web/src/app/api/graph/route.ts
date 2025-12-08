@@ -20,14 +20,11 @@ export async function POST(req: Request) {
   };
 
   if (!graph) {
-    return NextResponse.json(
-      { error: "graph is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "graph is required" }, { status: 400 });
   }
 
   try {
-    await upsert(graph);           
+    await upsert(graph);
     return NextResponse.json(graph, { status: 201 });
   } catch (err) {
     console.error(err);
