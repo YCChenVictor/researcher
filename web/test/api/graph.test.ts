@@ -1,16 +1,52 @@
 // test/api/nodes.post.test.ts
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
 // 1) mock the module with a real mock fn
 vi.mock("../../src/app/lib/graph", () => ({
   upsert: vi.fn(async () => ({})), // always resolves, no network
+  get: vi.fn(),
 }));
 
 // 2) AFTER mock, import route + upsert
-import { POST } from "../../src/app/api/graph/route";
-import { upsert } from "../../src/app/lib/graph";
+import { GET, POST } from "../../src/app/api/graph/route";
+import { upsert, get } from "../../src/app/lib/graph";
 
 const mockedUpsert = upsert as unknown as vi.Mock;
+const mockedGet = get as unknown as vi.Mock;
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("GET /api/graph", () => {
+  it("returns 200 with graph", async () => {
+    mockedGet.mockResolvedValueOnce({
+      nodes: [{ key: "n1", name: "Node 1", color: "#ff8800" }],
+      links: [],
+    });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json).toEqual({
+      graph: {
+        nodes: [{ key: "n1", name: "Node 1", color: "#ff8800" }],
+        links: [],
+      },
+    });
+  });
+
+  it("returns 500 on error", async () => {
+    mockedGet.mockRejectedValueOnce(new Error("boom"));
+
+    const res = await GET();
+    expect(res.status).toBe(500);
+
+    const json = await res.json();
+    expect(json).toEqual({ error: "Internal server error" });
+  });
+});
 
 describe("POST /api/graph", () => {
   it("returns 400 when graph is missing", async () => {

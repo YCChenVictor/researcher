@@ -9,13 +9,27 @@ import {
 import { render, fireEvent, screen, within } from "@testing-library/react";
 import ForceGraph from "../../src/app/Graph";
 
-// Mock the JSON import used in the component
-vi.mock("../node-structure.json", () => ({
-  default: {
-    nodes: [],
-    links: [],
-  },
-}));
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        graph: {
+          nodes: [
+            { key: "n1", name: "Node 1", color: "#ff8800" },
+            { key: "n2", name: "Node 2", color: "#ff8800" },
+          ],
+          links: [{ source: "n1", target: "n2" }],
+        },
+      }),
+    })) as unknown as typeof fetch,
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("ForceGraph", () => {
   let promptSpy: ReturnType<typeof vi.spyOn>;
@@ -59,7 +73,7 @@ describe("ForceGraph", () => {
     fireEvent.click(svg, { clientX: 400, clientY: 200 });
 
     const circles = container.querySelectorAll("circle");
-    expect(circles.length).toBe(2);
+    expect(circles.length).toBe(4);
 
     const [nodeA, nodeB] = circles;
 
@@ -67,6 +81,6 @@ describe("ForceGraph", () => {
     fireEvent.click(nodeB);
 
     const lines = container.querySelectorAll("line");
-    expect(lines.length).toBe(1);
+    expect(lines.length).toBe(2);
   });
 });

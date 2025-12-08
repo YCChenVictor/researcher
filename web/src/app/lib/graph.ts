@@ -17,7 +17,7 @@ export type GraphPayload = {
   links: unknown[];
 };
 
-const GRAPH_PATH = "nodes/graph.json";
+const GRAPH_PATH = "graph.json";
 
 async function get(): Promise<GraphPayload> {
   try {
