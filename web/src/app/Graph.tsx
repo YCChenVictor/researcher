@@ -132,7 +132,7 @@ const ForceGraph: React.FC = () => {
         }));
 
       const serializeNodes = (nodes: Node[]) =>
-        nodes.map(({ vx, vy, index, ...rest }) => rest);
+        nodes.map(({ vx: _vx, vy: _vy, index: _index, ...rest }) => rest);
 
       const persistGraph = () => {
         const graph = {
@@ -171,8 +171,6 @@ const ForceGraph: React.FC = () => {
           updateNodes,
         });
 
-        const graph = { nodes, links };
-
         persistGraph();
       };
 
@@ -192,6 +190,8 @@ const ForceGraph: React.FC = () => {
 
         updateLinks();
         simulation.alpha(1).restart();
+
+        persistGraph();
       };
 
       const handleNodeClick = (event: MouseEvent, d: Node) => {
