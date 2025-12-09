@@ -1,5 +1,5 @@
 import type { Simulation } from "d3";
-import type { Node, Link } from "../types/nodes";
+import type { Node, Link } from "../types/graph";
 
 export type NodeClickDeps = {
   setSelectedSource: (node: Node | null) => void;
@@ -80,12 +80,6 @@ const handleAddNodeAt = (
 
   // persist full graph (nodes + links)
   const graph = { nodes: nextNodes, links };
-};
-
-const removeNodeContextMenu = (
-  zoomG: d3.Selection<SVGGElement, unknown, null, undefined>,
-) => {
-  zoomG.selectAll(".node-context-menu").remove();
 };
 
 const createShowContextMenu = (
