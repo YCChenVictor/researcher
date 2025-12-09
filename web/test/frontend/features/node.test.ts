@@ -4,8 +4,6 @@ import * as d3 from "d3";
 import {
   createShowContextMenu,
   handleNodeClickLogic,
-  showContextMenu,
-  ShowContextMenuDeps,
   type NodeClickDeps,
 } from "../../../src/app/features/nodes";
 

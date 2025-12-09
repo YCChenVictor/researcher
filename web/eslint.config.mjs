@@ -1,21 +1,12 @@
-// eslint.config.mjs
-// @ts-check
-
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import prettierPlugin from "eslint-plugin-prettier";
-import prettierConfig from "eslint-config-prettier";
 
 export default defineConfig([
-  // Next.js + TS presets
   ...nextVitals,
   ...nextTs,
 
-  // Turn off conflicting stylistic rules
-  prettierConfig,
-
-  // Global ignores
   globalIgnores([
     ".next/**",
     "out/**",
@@ -23,7 +14,6 @@ export default defineConfig([
     "next-env.d.ts",
   ]),
 
-  // Prettier as an ESLint rule with 2-space indent
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
@@ -35,6 +25,13 @@ export default defineConfig([
         {
           tabWidth: 2,
           useTabs: false,
+        },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
         },
       ],
     },

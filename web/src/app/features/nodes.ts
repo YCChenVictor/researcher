@@ -57,7 +57,7 @@ const handleAddNodeAt = (
     updateNodes: () => void;
   },
 ) => {
-  const { nodes, links, setNodes, simulation, updateNodes } = deps;
+  const { nodes, setNodes, simulation, updateNodes } = deps;
 
   const name = window.prompt("Topic?");
   if (!name) return;
@@ -77,9 +77,6 @@ const handleAddNodeAt = (
   simulation.nodes(nextNodes);
   simulation.alpha(1).restart();
   updateNodes();
-
-  // persist full graph (nodes + links)
-  const graph = { nodes: nextNodes, links };
 };
 
 const createShowContextMenu = (
