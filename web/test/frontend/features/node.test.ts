@@ -9,7 +9,7 @@ import {
   type NodeClickDeps,
 } from "../../../src/app/features/nodes";
 
-import { Node } from "../../../src/app/types/nodes";
+import { Node } from "../../../src/app/types/graph";
 
 type MenuItemDatum = {
   label: string;

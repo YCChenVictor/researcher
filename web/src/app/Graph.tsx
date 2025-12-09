@@ -6,7 +6,7 @@ import {
   handleNodeClickLogic,
   createShowContextMenu,
 } from "./features/nodes";
-// assume Node / Link types are available in scope
+import { Node, Link } from "./types/graph";
 
 const ForceGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -36,6 +36,8 @@ const ForceGraph: React.FC = () => {
           }));
         }
       }
+
+      console.log(links);
 
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
@@ -123,6 +125,28 @@ const ForceGraph: React.FC = () => {
           .attr("stroke-width", (d) => (d === selectedSource ? 2 : 0));
       };
 
+      const serializeLinks = (links: Link[]) =>
+        links.map((l) => ({
+          source: typeof l.source === "string" ? l.source : l.source.key,
+          target: typeof l.target === "string" ? l.target : l.target.key,
+        }));
+
+      const serializeNodes = (nodes: Node[]) =>
+        nodes.map(({ vx, vy, index, ...rest }) => rest);
+
+      const persistGraph = () => {
+        const graph = {
+          nodes: serializeNodes(nodes),
+          links: serializeLinks(links),
+        };
+
+        void fetch("/api/graph", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ graph }),
+        }).catch((err) => console.error("Failed to persist graph", err));
+      };
+
       const setSelectedSource = (nodeToSelect: Node | null) => {
         selectedSource = nodeToSelect;
         updateNodeHighlight();
@@ -149,24 +173,21 @@ const ForceGraph: React.FC = () => {
 
         const graph = { nodes, links };
 
-        void fetch("/api/graph", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ graph }),
-        }).catch((err) => {
-          console.error("Failed to persist graph", err);
-        });
+        persistGraph();
       };
 
-      const addLink = (source: Node, target: Node) => {
+      const addLink = (sourceNode: Node, targetNode: Node) => {
         const newLink: Link = {
-          source,
-          target,
+          source: sourceNode.key,
+          target: targetNode.key,
         };
+
+        console.log(newLink);
 
         links = [...links, newLink];
 
         const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
+        linkForce.id((d) => d.key); // important for string ids
         linkForce.links(links);
 
         updateLinks();
@@ -176,7 +197,7 @@ const ForceGraph: React.FC = () => {
       const handleNodeClick = (event: MouseEvent, d: Node) => {
         handleNodeClickLogic(event, d, selectedSource, {
           setSelectedSource,
-          addLink,
+          addLink, // now matches (Node, Node) => void
         });
       };
 
