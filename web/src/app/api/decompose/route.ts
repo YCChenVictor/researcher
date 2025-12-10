@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { decomposeBody } from "../../schemas/decompose";
-import { buildMessage, call } from "@/app/lib/llm";
+import { buildMessage, call } from "../../server/llm";
 
 export async function POST(req: NextRequest) {
   try {

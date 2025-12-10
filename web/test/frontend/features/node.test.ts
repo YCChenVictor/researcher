@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   handleNodeClickLogic,
   type NodeClickDeps,
-} from "../../../src/app/features/graph";
+} from "../../../src/app/client/graph";
 
 const makeEvent = (
   overrides: Partial<{ metaKey: boolean; ctrlKey: boolean }> = {},
