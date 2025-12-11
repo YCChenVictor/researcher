@@ -12,8 +12,8 @@ import {
   renderLinks,
   positionLinksOnTick,
   buildChildren,
-  decompose,
-} from "./features/graph";
+  initArticle,
+} from "./client/graph";
 import type { Node, Link } from "./types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 
@@ -26,7 +26,6 @@ const ForceGraph: React.FC = () => {
   type MenuState = { node: Node; x: number; y: number } | null;
   const [menu, setMenu] = useState<MenuState>(null);
 
-  // bridge React -> D3
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
 
   useEffect(() => {
@@ -213,10 +212,6 @@ const ForceGraph: React.FC = () => {
       ref={containerRef}
       className="relative w-full h-[70vh] rounded-xl border border-slate-200 bg-slate-600 text-slate-100 overflow-hidden"
     >
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-2 text-xs text-slate-300 bg-slate-900/70 backdrop-blur">
-        <span className="font-semibold tracking-wide">ForceGraph</span>
-      </div>
-
       <svg
         ref={svgRef}
         data-testid="force-graph-svg"
@@ -227,23 +222,12 @@ const ForceGraph: React.FC = () => {
         <NodeContextMenu
           x={menu.x}
           y={menu.y}
-          onAction={async (action) => {
-            if (action === "close") {
-              setMenu(null);
-              return;
-            }
-
-            if (action === "decompose") {
-              try {
-                const titles = await decompose(menu.node);
-                connectChildrenRef.current?.(menu.node, titles);
-              } catch (err) {
-                console.error("Decompose error", err);
-              } finally {
-                setMenu(null);
-              }
-            }
-          }}
+          node={menu.node}
+          closeMenu={() => setMenu(null)}
+          connectChildren={(parent, titles) =>
+            connectChildrenRef.current?.(parent, titles)
+          }
+          initArticle={initArticle}
         />
       )}
     </div>

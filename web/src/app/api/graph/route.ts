@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { upsert, get } from "../../lib/graph";
+import { upsert, get } from "../../server/graph";
 
 export async function GET() {
   try {

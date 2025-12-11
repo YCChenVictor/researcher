@@ -10,6 +10,10 @@ jobs:
     defaults:
       run:
         working-directory: ./web
+    env:
+      NEXT_PUBLIC_GITHUB_TOKEN: testing
+      NEXT_PUBLIC_GITHUB_OWNER: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4

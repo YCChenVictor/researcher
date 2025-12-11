@@ -105,6 +105,7 @@ const handleAddNodeAt = (
   updateNodes();
 };
 
+// Pure helpers (no DOM / no fetch)
 const buildChildren = (
   parent: Node,
   titles: string[],
@@ -172,6 +173,7 @@ const persistGraph = (nodes: Node[], links: Link[]) => {
   }).catch((err) => console.error("Failed to persist graph", err));
 };
 
+// D3 / SVG helpers
 const setupSvg = (
   svgEl: SVGSVGElement,
   width: number,
@@ -226,24 +228,6 @@ const renderLinks = (
     .attr("stroke", "#999")
     .attr("marker-end", "url(#arrow)");
 
-const createDrag = (simulation: d3.Simulation<Node, undefined>) =>
-  d3
-    .drag<SVGCircleElement, Node>()
-    .on("start", (event, d) => {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
-    })
-    .on("drag", (event, d) => {
-      d.fx = event.x;
-      d.fy = event.y;
-    })
-    .on("end", (event, d) => {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = undefined;
-      d.fy = undefined;
-    });
-
 const createSimulation = (
   nodes: Node[],
   links: Link[],
@@ -262,6 +246,24 @@ const createSimulation = (
     .force("charge", d3.forceManyBody().strength(-800))
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("collide", d3.forceCollide(20));
+
+const createDrag = (simulation: d3.Simulation<Node, undefined>) =>
+  d3
+    .drag<SVGCircleElement, Node>()
+    .on("start", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    })
+    .on("drag", (event, d) => {
+      d.fx = event.x;
+      d.fy = event.y;
+    })
+    .on("end", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = undefined;
+      d.fy = undefined;
+    });
 
 const positionLinksOnTick = (
   linkSelection: d3.Selection<SVGLineElement, Link, SVGGElement, unknown>,
@@ -289,8 +291,31 @@ const positionLinksOnTick = (
     );
 };
 
+const initArticle = async (node: Node) => {
+  try {
+    const res = await fetch("/api/articles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: `articles/${node.key}`,
+        content: node.name,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Init article failed: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("Article created", data.file);
+  } catch (err) {
+    console.error("Init article error", err);
+  }
+};
+
 export {
   createSimulation,
+  initArticle,
   createDrag,
   setupSvg,
   fetchGraph,

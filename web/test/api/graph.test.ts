@@ -1,15 +1,20 @@
-// test/api/nodes.post.test.ts
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-// 1) mock the module with a real mock fn
-vi.mock("../../src/app/lib/graph", () => ({
-  upsert: vi.fn(async () => ({})), // always resolves, no network
-  get: vi.fn(),
-}));
+vi.mock("../../src/app/server/graph", () => {
+  const upsert = vi.fn(async (_path: string, _content: string) => ({
+    path: "graph.json",
+    sha: "test-sha",
+  }));
+  const get = vi.fn(async () => ({
+    nodes: [],
+    links: [],
+  }));
 
-// 2) AFTER mock, import route + upsert
+  return { upsert, get };
+});
+
 import { GET, POST } from "../../src/app/api/graph/route";
-import { upsert, get } from "../../src/app/lib/graph";
+import { upsert, get } from "../../src/app/server/graph";
 
 const mockedUpsert = upsert as unknown as vi.Mock;
 const mockedGet = get as unknown as vi.Mock;
@@ -61,7 +66,7 @@ describe("POST /api/graph", () => {
     const json = await res.json();
     expect(json.error).toBe("graph is required");
   });
-
+  //
   it("upserts the graph and calls upsert", async () => {
     const graph = {
       nodes: [{ id: "n1" }],

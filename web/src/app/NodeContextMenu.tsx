@@ -1,20 +1,54 @@
-type MenuActionId = "decompose" | "close";
+import type { Node } from "./types/graph";
+import { decompose } from "./client/graph";
+
+export type MenuActionId = "decompose" | "init" | "close";
 
 type NodeContextMenuProps = {
   x: number;
   y: number;
-  onAction: (action: MenuActionId) => void | Promise<void>;
+  node: Node;
+  closeMenu: () => void;
+  connectChildren: (parent: Node, titles: string[]) => void;
+  initArticle: (node: Node) => void | Promise<void>;
 };
 
 const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   x,
   y,
-  onAction,
+  node,
+  closeMenu,
+  connectChildren,
+  initArticle,
 }) => {
   const options: { label: string; action: MenuActionId }[] = [
     { label: "Decompose", action: "decompose" },
+    { label: "Init", action: "init" },
     { label: "Close", action: "close" },
   ];
+
+  const handleClick = async (action: MenuActionId) => {
+    switch (action) {
+      case "close":
+        closeMenu();
+        return;
+
+      case "init":
+        await initArticle(node);
+        closeMenu();
+        return;
+
+      case "decompose":
+        try {
+          const titles = await decompose(node);
+          connectChildren(node, titles);
+        } catch (err) {
+          console.error("Decompose error", err);
+        } finally {
+          closeMenu();
+        }
+        return;
+    }
+  };
 
   return (
     <div
@@ -26,7 +60,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         <button
           key={opt.action}
           className="block w-full text-left px-3 py-1 hover:bg-slate-100"
-          onClick={() => onAction(opt.action)}
+          onClick={() => void handleClick(opt.action)}
         >
           {opt.label}
         </button>
