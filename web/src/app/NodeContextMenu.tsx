@@ -1,5 +1,7 @@
 import type { Node } from "./types/graph";
 import { decompose } from "./client/graph";
+import { get } from "./client/article";
+import { useEffect, useMemo, useState } from "react";
 
 export type MenuActionId = "decompose" | "init" | "close";
 
@@ -20,11 +22,38 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   connectChildren,
   initArticle,
 }) => {
-  const options: { label: string; action: MenuActionId }[] = [
-    { label: "Decompose", action: "decompose" },
-    { label: "Init", action: "init" },
-    { label: "Close", action: "close" },
-  ];
+  const [hasArticle, setHasArticle] = useState<boolean>(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    setHasArticle(false);
+
+    (async () => {
+      try {
+        const article = await get(node.key); // null/undefined => not exists
+        if (!alive) return;
+        setHasArticle(Boolean(article));
+      } catch (e) {
+        if (!alive) return;
+        console.error("Get article error", e);
+        setHasArticle(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [node.key]);
+
+  const options = useMemo(
+    () => [
+      { label: "Decompose", action: "decompose" as const },
+      { label: hasArticle ? "Edit" : "Init", action: "init" as const },
+      { label: "Close", action: "close" as const },
+    ],
+    [hasArticle],
+  );
 
   const handleClick = async (action: MenuActionId) => {
     switch (action) {

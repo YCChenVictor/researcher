@@ -12,8 +12,8 @@ import {
   renderLinks,
   positionLinksOnTick,
   buildChildren,
-  initArticle,
 } from "./client/graph";
+import { create } from "./client/article";
 import type { Node, Link } from "./types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 
@@ -227,7 +227,7 @@ const ForceGraph: React.FC = () => {
           connectChildren={(parent, titles) =>
             connectChildrenRef.current?.(parent, titles)
           }
-          initArticle={initArticle}
+          initArticle={create}
         />
       )}
     </div>

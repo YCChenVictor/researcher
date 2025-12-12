@@ -5,4 +5,8 @@ const articleBody = z.object({
   content: z.string(),
 });
 
-export { articleBody };
+const getQuerySchema = z.object({
+  key: z.string().min(1),
+});
+
+export { articleBody, getQuerySchema };

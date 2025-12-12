@@ -98,14 +98,12 @@ const handleAddNodeAt = (
 
   const nextNodes = [...nodes, newNode];
 
-  // update local graph
   setNodes(nextNodes);
   simulation.nodes(nextNodes);
   simulation.alpha(1).restart();
   updateNodes();
 };
 
-// Pure helpers (no DOM / no fetch)
 const buildChildren = (
   parent: Node,
   titles: string[],
@@ -289,28 +287,6 @@ const positionLinksOnTick = (
         ? ((d.target as Node).y ?? 0)
         : 0,
     );
-};
-
-const initArticle = async (node: Node) => {
-  try {
-    const res = await fetch("/api/articles", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        path: `articles/${node.key}`,
-        content: node.name,
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Init article failed: ${res.status}`);
-    }
-
-    const data = await res.json();
-    console.log("Article created", data.file);
-  } catch (err) {
-    console.error("Init article error", err);
-  }
 };
 
 export {
