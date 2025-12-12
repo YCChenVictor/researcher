@@ -1,12 +1,6 @@
-import { Octokit } from "octokit";
 import type { Endpoints } from "@octokit/types";
-
-import {
-  GITHUB_TOKEN,
-  GITHUB_OWNER,
-  GITHUB_REPO,
-  GITHUB_BRANCH,
-} from "./env.server";
+import { githubClient } from "./githubClient";
+import { GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH } from "./env.server";
 
 interface ArticleFile {
   name: string;
@@ -20,12 +14,9 @@ type GithubFile = {
   sha: string;
 };
 
-const token = GITHUB_TOKEN;
 const owner = GITHUB_OWNER;
 const repo = GITHUB_REPO;
 const branch = GITHUB_BRANCH;
-
-const githubClient = new Octokit({ auth: token });
 
 let repoChecked = false;
 
@@ -57,14 +48,12 @@ const hasStatus = (
 
 const getFile = async (filePath: string): Promise<GithubFile | null> => {
   try {
-    console.log("AAAAA");
     const { data } = await githubClient.rest.repos.getContent({
       owner,
       repo,
       path: filePath,
       ref: branch,
     });
-    console.log("BBBBBB");
 
     if (Array.isArray(data)) {
       throw new Error(`Expected file but got directory at ${filePath}`);
@@ -86,7 +75,6 @@ const getFile = async (filePath: string): Promise<GithubFile | null> => {
     // weird case: no content or unexpected encoding
     return { content: "", sha };
   } catch (err) {
-    console.log("zxcvzxvzxv");
     if (hasStatus(err) && err.status === 404) {
       // file not found
       return null;

@@ -12,4 +12,12 @@ const upsert = async (filePath: string, content: string) => {
   });
 };
 
-export { upsert };
+const get = async (filePath: string): Promise<string | null> => {
+  const file = await getFile(`articles/${filePath}`);
+
+  if (!file || !file.content) return null;
+
+  return Buffer.from(file.content, "base64").toString("utf-8");
+};
+
+export { upsert, get };
