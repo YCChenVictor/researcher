@@ -148,13 +148,14 @@ const ForceGraph: React.FC = () => {
         event.preventDefault();
         event.stopPropagation();
 
-        if (d.x == null || d.y == null || !svgRef.current) return;
+        const container = containerRef.current;
+        const svgEl = svgRef.current;
 
-        const t = d3.zoomTransform(svgRef.current);
-        const x = t.applyX(d.x) + 12;
-        const y = t.applyY(d.y) - 12;
+        if (!container || !svgEl) return;
 
-        setMenu({ node: d, x, y });
+        const [mx, my] = d3.pointer(event, container);
+
+        setMenu({ node: d, x: mx + 12, y: my - 12 });
       }
 
       const connectChildren: ConnectChildrenFn = (parent, titles) => {

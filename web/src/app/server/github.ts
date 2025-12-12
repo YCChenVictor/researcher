@@ -72,11 +72,9 @@ const getFile = async (filePath: string): Promise<GithubFile | null> => {
       };
     }
 
-    // weird case: no content or unexpected encoding
     return { content: "", sha };
   } catch (err) {
     if (hasStatus(err) && err.status === 404) {
-      // file not found
       return null;
     }
     throw err;
