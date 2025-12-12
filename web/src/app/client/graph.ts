@@ -291,7 +291,6 @@ const positionLinksOnTick = (
 
 export {
   createSimulation,
-  initArticle,
   createDrag,
   setupSvg,
   fetchGraph,

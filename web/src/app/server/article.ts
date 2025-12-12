@@ -4,12 +4,17 @@ const upsert = async (filePath: string, content: string) => {
   const file = await getFile(filePath);
   const sha = file?.sha;
 
-  return put({
+  const data = await put({
     filePath,
     content,
     message: sha ? "Update article" : "Create article",
     ...(sha ? { sha } : {}),
   });
+
+  return {
+    path: data.content?.path ?? filePath,
+    sha: data.commit.sha,
+  };
 };
 
 const get = async (filePath: string): Promise<string | null> => {
