@@ -3,7 +3,6 @@ import { SimulationLinkDatum, SimulationNodeDatum } from "d3";
 interface Node extends SimulationNodeDatum {
   key: string;
   name: string;
-  color: string;
   x?: number;
   y?: number;
   fx?: number;

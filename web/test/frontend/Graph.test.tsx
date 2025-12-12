@@ -107,7 +107,7 @@ describe("ForceGraph", () => {
       name: /decompose/i,
     });
 
-    expect(decomposeButton).toBeTruthy(); // <- instead of toBeInTheDocument
+    expect(decomposeButton).toBeTruthy();
   });
 
   it("uses connectChildren when clicking Decompose", async () => {

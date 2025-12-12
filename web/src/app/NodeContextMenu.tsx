@@ -3,7 +3,7 @@ import { decompose } from "./client/graph";
 import { get } from "./client/article";
 import { useEffect, useMemo, useState } from "react";
 
-export type MenuActionId = "decompose" | "init" | "close";
+export type MenuActionId = "decompose" | "init" | "close" | "edit";
 
 type NodeContextMenuProps = {
   x: number;
@@ -12,6 +12,20 @@ type NodeContextMenuProps = {
   closeMenu: () => void;
   connectChildren: (parent: Node, titles: string[]) => void;
   initArticle: (node: Node) => void | Promise<void>;
+  navigate?: (url: string) => void;
+  getArticle?: (key: string) => Promise<unknown | null>;
+};
+
+const encodePath = (p: string) =>
+  p.split("/").map(encodeURIComponent).join("/");
+
+const toTinaDocEditUrl = (fullPath: string) => {
+  const collection = "post";
+  const baseDir = "content/articles/";
+  const relative = fullPath.startsWith(baseDir)
+    ? fullPath.slice(baseDir.length)
+    : fullPath;
+  return `/edit/index.html#/collections/edit/${collection}/${encodePath(relative)}`;
 };
 
 const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
@@ -21,22 +35,22 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   closeMenu,
   connectChildren,
   initArticle,
+  navigate,
+  getArticle,
 }) => {
-  const [hasArticle, setHasArticle] = useState<boolean>(false);
+  const [hasArticle, setHasArticle] = useState<boolean | null>(null);
 
   useEffect(() => {
     let alive = true;
-
-    setHasArticle(false);
+    setHasArticle(null);
 
     (async () => {
       try {
-        const article = await get(node.key); // null/undefined => not exists
+        const article = await (getArticle ?? get)(node.key);
         if (!alive) return;
-        setHasArticle(Boolean(article));
-      } catch (e) {
+        setHasArticle(article != null);
+      } catch {
         if (!alive) return;
-        console.error("Get article error", e);
         setHasArticle(false);
       }
     })();
@@ -44,34 +58,41 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     return () => {
       alive = false;
     };
-  }, [node.key]);
+  }, [node.key, getArticle]);
 
-  const options = useMemo(
-    () => [
+  const options = useMemo(() => {
+    const initOrEdit =
+      hasArticle === null
+        ? []
+        : hasArticle
+          ? [{ label: "Edit", action: "edit" as const }]
+          : [{ label: "Init", action: "init" as const }];
+
+    return [
       { label: "Decompose", action: "decompose" as const },
-      { label: hasArticle ? "Edit" : "Init", action: "init" as const },
+      ...initOrEdit,
       { label: "Close", action: "close" as const },
-    ],
-    [hasArticle],
-  );
+    ];
+  }, [hasArticle]);
+
+  const doNavigate = navigate ?? ((url: string) => window.location.assign(url));
 
   const handleClick = async (action: MenuActionId) => {
     switch (action) {
       case "close":
         closeMenu();
         return;
-
       case "init":
         await initArticle(node);
         closeMenu();
         return;
-
+      case "edit":
+        doNavigate(toTinaDocEditUrl(node.key));
+        return;
       case "decompose":
         try {
           const titles = await decompose(node);
           connectChildren(node, titles);
-        } catch (err) {
-          console.error("Decompose error", err);
         } finally {
           closeMenu();
         }
@@ -81,7 +102,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   return (
     <div
-      className="absolute bg-slate-50 text-slate-900 border rounded shadow text-sm z-20"
+      className="absolute z-20 bg-slate-50 text-slate-900 border rounded shadow text-sm"
       style={{ left: x, top: y }}
       onClick={(e) => e.stopPropagation()}
     >
