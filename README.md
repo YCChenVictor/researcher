@@ -1,38 +1,25 @@
-# Blog
+# Researcher
 
-Welcome to my blog!
+## Start the project
 
-## Introduction
-
-This is a personal blog built with React where I share my thoughts, experiences, and insights on various topics.
-
-## Table of Contents
-
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Features
-
-- Write and publish blog posts in markdown
-- Categorize posts by topics or tags in software engineering field
-- Responsive design for a great reading experience on all devices
-- Written in react
-
-## Getting Started
-
-To explore my blog, simply visit [blog](https://ycchenvictor.netlify.app/blog).
-
-## Usage
-
-Feel free to read and engage with the blog posts. You can also leave comments and share your thoughts on the topics discussed.
+```bash
+cd frontend
+yarn start
+```
 
 ## Contributing
 
-As this is my personal blog, I currently do not accept external contributions. However, feedback and comments on the blog posts are always appreciated.
+Contributions are welcome! To propose a change:
 
-## License
+1. **Open an issue**  
+   - Describe the problem or feature request clearly.  
+   - Add steps to reproduce (if it’s a bug).
 
-This blog is created and maintained by me. All rights reserved.
+2. **Fork the repository**
+
+3. **Create a feature branch**
+
+```bash
+git checkout -b feat/short-description
+# or
+git checkout -b fix/short-description

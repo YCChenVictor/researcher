@@ -1,0 +1,27 @@
+name: researcher
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  web:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./web
+    env:
+      NEXT_PUBLIC_GITHUB_TOKEN: testing
+      NEXT_PUBLIC_GITHUB_OWNER: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile # the yarn.lock is updated according to the node version
+    - name: Lint Code
+      run: yarn eslint
+    - name: Run tests
+      run: yarn test
