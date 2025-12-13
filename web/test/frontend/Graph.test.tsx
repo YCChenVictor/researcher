@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, within, waitFor } from "@testing-library/react";
 
-import * as graphFeatures from "../../src/app/client/graph";
+import * as graphFeatures from "../../src/components/client/graph";
 import ForceGraph from "../../src/components/Graph";
 
 beforeEach(() => {

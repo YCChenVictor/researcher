@@ -19,10 +19,10 @@ const upsert = async (filePath: string, content: string) => {
 
 const get = async (filePath: string): Promise<string | null> => {
   const file = await getFile(`articles/${filePath}`);
+  if (!file) return null;
 
-  if (!file || !file.content) return null;
-
-  return Buffer.from(file.content, "base64").toString("utf-8");
+  // getFile() already returns utf8 text in file.content
+  return file.content ?? "";
 };
 
 export { upsert, get };

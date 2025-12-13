@@ -1,9 +1,10 @@
-import type { Node } from "../app/types/graph";
-import { decompose } from "../app/client/graph";
-import { get } from "../app/client/article";
 import { useEffect, useMemo, useState } from "react";
 
-export type MenuActionId = "decompose" | "init" | "close" | "edit";
+import type { Node } from "../app/types/graph";
+import { decompose } from "./client/graph";
+import { get } from "./client/article";
+
+export type MenuActionId = "decompose" | "view" | "edit" | "init" | "close";
 
 type NodeContextMenuProps = {
   x: number;
@@ -60,35 +61,50 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     };
   }, [node.key, getArticle]);
 
+  const doNavigate = useMemo(
+    () => navigate ?? ((url: string) => window.location.assign(url)),
+    [navigate],
+  );
+
   const options = useMemo(() => {
-    const initOrEdit =
+    const extra =
       hasArticle === null
         ? []
         : hasArticle
-          ? [{ label: "Edit", action: "edit" as const }]
-          : [{ label: "Init", action: "init" as const }];
+          ? ([
+              { label: "View", action: "view" as const },
+              { label: "Edit", action: "edit" as const },
+            ] as const)
+          : ([{ label: "Init", action: "init" as const }] as const);
 
     return [
       { label: "Decompose", action: "decompose" as const },
-      ...initOrEdit,
+      ...extra,
       { label: "Close", action: "close" as const },
     ];
   }, [hasArticle]);
-
-  const doNavigate = navigate ?? ((url: string) => window.location.assign(url));
 
   const handleClick = async (action: MenuActionId) => {
     switch (action) {
       case "close":
         closeMenu();
         return;
+
       case "init":
         await initArticle(node);
         closeMenu();
         return;
+
+      case "view":
+        doNavigate(`/article?file=${encodeURIComponent(node.key)}`);
+        closeMenu();
+        return;
+
       case "edit":
         doNavigate(toTinaDocEditUrl(node.key));
+        closeMenu();
         return;
+
       case "decompose":
         try {
           const titles = await decompose(node);
