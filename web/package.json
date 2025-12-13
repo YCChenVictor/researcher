@@ -8,6 +8,7 @@
     "test:coverage": "vitest run --coverage",
     "build": "tinacms build && next build",
     "start": "next start",
+    "format": "yarn lint --fix",
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {

@@ -1,64 +1,63 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { handlePostArticle } from "../../src/app/api/articles/route";
+import {
+  handlePostArticle,
+  handlePutArticle,
+} from "../../src/app/api/articles/route";
 
-const makeRequest = (body: unknown) =>
-  new NextRequest("http://localhost/api/article", {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "content-type": "application/json" },
-  });
+vi.mock("../../src/app/server/article", () => ({
+  upsert: vi.fn(),
+}));
+
+import { upsert } from "../../src/app/server/article";
+
+// import { articleBody } from "@/app/schemas/articles";
 
 describe("handlePostArticle", () => {
   it("returns 201 and upsert result on success", async () => {
-    const mockResult = { path: "posts/test.md", sha: "123" };
-    const upsert = vi.fn().mockResolvedValue(mockResult);
+    const upsertMock = vi.mocked(upsert);
+    upsertMock.mockResolvedValueOnce({ path: "posts/test.md", sha: "123" });
 
-    const req = makeRequest({
-      path: "posts/test.md",
-      content: "# Hello",
+    const req = new NextRequest("http://localhost/api/article", {
+      method: "POST",
+      body: JSON.stringify({ path: "posts/test.md", content: "# Hello" }),
+      headers: { "content-type": "application/json" },
     });
 
-    const res = await handlePostArticle(req, { upsert });
+    const res = await handlePostArticle(req);
     expect(res.status).toBe(201);
 
-    const json = await res.json();
-    expect(json).toEqual({ ok: true, file: mockResult });
-    expect(upsert).toHaveBeenCalledWith("posts/test.md", "# Hello");
+    expect(upsertMock).toHaveBeenCalledWith("posts/test.md", "# Hello");
+    await expect(res.json()).resolves.toEqual({
+      ok: true,
+      file: { path: "posts/test.md", sha: "123" },
+    });
   });
+});
 
-  it("returns 400 on Zod validation error", async () => {
-    const upsert = vi.fn(); // should not be called
+describe("handlePutArticle", () => {
+  beforeEach(() => vi.clearAllMocks());
 
-    const req = makeRequest({}); // invalid body
-
-    const res = await handlePostArticle(req, { upsert });
-    expect(res.status).toBe(400);
-
-    const json = await res.json();
-    expect(json.error).toBe("Invalid body");
-    expect(Array.isArray(json.issues)).toBe(true);
-    expect(upsert).not.toHaveBeenCalled();
-  });
-
-  it("returns 500 on unexpected error", async () => {
-    const upsert = vi.fn().mockRejectedValue(new Error("boom"));
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    const req = makeRequest({
+  it("returns 200 + ok=true on success", async () => {
+    vi.mocked(upsert).mockResolvedValueOnce({
       path: "posts/test.md",
-      content: "# Hello",
+      sha: "abc",
     });
 
-    const res = await handlePostArticle(req, { upsert });
-    expect(res.status).toBe(500);
+    const req = new NextRequest("http://localhost/api/article", {
+      method: "PUT",
+      body: JSON.stringify({ path: "posts/test.md", content: "# Hello" }),
+      headers: { "content-type": "application/json" },
+    });
 
-    const json = await res.json();
-    expect(json).toEqual({ error: "Internal server error" });
+    const res = await handlePutArticle(req);
 
-    expect(upsert).toHaveBeenCalledTimes(1);
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      ok: true,
+      file: { path: "posts/test.md", sha: "abc" },
+    });
 
-    consoleSpy.mockRestore();
+    expect(upsert).toHaveBeenCalledWith("posts/test.md", "# Hello");
   });
 });

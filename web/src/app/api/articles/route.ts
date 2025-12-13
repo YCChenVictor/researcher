@@ -4,17 +4,12 @@ import { ZodError } from "zod";
 import { articleBody, getQuerySchema } from "../../schemas/articles";
 import { upsert, get } from "../../server/article";
 
-export async function handlePostArticle(
-  req: NextRequest,
-  deps: { upsert: (path: string, content: string) => Promise<unknown> } = {
-    upsert,
-  },
-) {
+async function handlePostArticle(req: NextRequest) {
   try {
     const json = await req.json();
     const { path, content } = articleBody.parse(json);
 
-    const result = await deps.upsert(path, content);
+    const result = await upsert(path, content);
 
     return NextResponse.json({ ok: true, file: result }, { status: 201 });
   } catch (err) {
@@ -33,7 +28,7 @@ export async function handlePostArticle(
   }
 }
 
-export async function handleGetArticle(
+async function handleGetArticle(
   req: NextRequest,
   deps: { get: (key: string) => Promise<string | null> } = { get },
 ) {
@@ -50,8 +45,6 @@ export async function handleGetArticle(
 
     return NextResponse.json({ ok: true, key, content }, { status: 200 });
   } catch (err) {
-    console.log("zxcvxcvzxcvzvxc0");
-    console.log(err);
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Invalid query", issues: err.issues },
@@ -67,10 +60,45 @@ export async function handleGetArticle(
   }
 }
 
-export async function POST(req: NextRequest) {
+const handlePutArticle = async (req: NextRequest) => {
+  try {
+    const json = await req.json();
+    const { path, content } = articleBody.parse(json);
+
+    const result = await upsert(path, content);
+    return NextResponse.json({ ok: true, file: result }, { status: 200 });
+  } catch (err) {
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid body", issues: err.issues },
+        { status: 400 },
+      );
+    }
+    console.error(err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+};
+
+async function POST(req: NextRequest) {
   return handlePostArticle(req);
 }
 
-export async function GET(req: NextRequest) {
+async function GET(req: NextRequest) {
   return handleGetArticle(req);
 }
+
+async function PUT(req: NextRequest) {
+  return handlePutArticle(req);
+}
+
+export {
+  handlePutArticle,
+  handleGetArticle,
+  handlePostArticle,
+  POST,
+  GET,
+  PUT,
+};
