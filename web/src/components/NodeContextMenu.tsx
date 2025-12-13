@@ -1,6 +1,6 @@
-import type { Node } from "./types/graph";
-import { decompose } from "./client/graph";
-import { get } from "./client/article";
+import type { Node } from "../app/types/graph";
+import { decompose } from "../app/client/graph";
+import { get } from "../app/client/article";
 import { useEffect, useMemo, useState } from "react";
 
 export type MenuActionId = "decompose" | "init" | "close" | "edit";

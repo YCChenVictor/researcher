@@ -1,7 +1,7 @@
 import { it, expect, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import NodeContextMenu from "../../src/app/NodeContextMenu";
+import NodeContextMenu from "../../src/components/NodeContextMenu";
 
 const { getMock } = vi.hoisted(() => ({ getMock: vi.fn() }));
 
