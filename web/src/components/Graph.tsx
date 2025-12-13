@@ -12,8 +12,8 @@ import {
   renderLinks,
   positionLinksOnTick,
   buildChildren,
-} from "../app/client/graph";
-import { create } from "../app/client/article";
+} from "./client/graph";
+import { create } from "./client/article";
 import type { Node, Link } from "../app/types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 

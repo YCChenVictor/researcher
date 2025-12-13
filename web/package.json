@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "d3": "^7.9.0",
+    "katex": "^0.16.27",
+    "marked": "^17.0.1",
     "next": "^16.0.7",
     "octokit": "^5.0.5",
     "openai": "^6.10.0",
@@ -20,6 +22,12 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.2.0",
+    "react-markdown": "^10.1.0",
+    "react-pro-sidebar": "^1.1.0",
+    "react-router-hash-link": "^2.4.3",
+    "react-syntax-highlighter": "^16.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
     "tinacms": "^3.1.0",
     "vitest": "^4.0.15"
   },
