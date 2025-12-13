@@ -1,7 +1,0 @@
-# Title
-
-## Purpose
-
-## Concept
-
-## Example
