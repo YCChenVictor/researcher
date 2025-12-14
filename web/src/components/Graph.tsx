@@ -14,7 +14,7 @@ import {
   buildChildren,
 } from "./client/graph";
 import { create } from "./client/article";
-import type { Node, Link } from "../app/types/graph";
+import type { Node, Link } from "../types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 
 type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
@@ -23,32 +23,34 @@ const ForceGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  type MenuState = { node: Node; x: number; y: number } | null;
-  const [menu, setMenu] = useState<MenuState>(null);
-
+  const [menu, setMenu] = useState<{ node: Node } | null>(null);
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
 
   useEffect(() => {
-    const run = async () => {
-      if (!svgRef.current || !containerRef.current) return;
+    let alive = true;
+    let simulation: d3.Simulation<Node, Link> | null = null;
 
-      let nodes: Node[] = [];
-      let links: Link[] = [];
+    const run = async () => {
+      const svgEl = svgRef.current;
+      const containerEl = containerRef.current;
+      if (!svgEl || !containerEl) return;
 
       const initial = await fetchGraph();
-      nodes = initial.nodes;
-      links = initial.links;
+      if (!alive) return;
 
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
+      let nodes: Node[] = initial.nodes;
+      let links: Link[] = initial.links;
+
+      const width = containerEl.clientWidth;
+      const height = containerEl.clientHeight;
 
       const { svg, zoomG, linkGroup, nodeGroup, labelGroup } = setupSvg(
-        svgRef.current,
+        svgEl,
         width,
         height,
       );
 
-      const simulation = createSimulation(nodes, links, width, height);
+      simulation = createSimulation(nodes, links, width, height);
       const drag = createDrag(simulation);
 
       let selectedSource: Node | null = null;
@@ -108,6 +110,8 @@ const ForceGraph: React.FC = () => {
       }
 
       function addNodeAt(x: number, y: number) {
+        if (!simulation) return;
+
         handleAddNodeAt(x, y, {
           nodes,
           setNodes(next: Node[]) {
@@ -121,11 +125,9 @@ const ForceGraph: React.FC = () => {
       }
 
       function addLink(sourceNode: Node, targetNode: Node) {
-        const newLink: Link = {
-          source: sourceNode.key,
-          target: targetNode.key,
-        };
-        links = [...links, newLink];
+        if (!simulation) return;
+
+        links = [...links, { source: sourceNode.key, target: targetNode.key }];
 
         const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
         linkForce.id((d) => d.key);
@@ -147,18 +149,12 @@ const ForceGraph: React.FC = () => {
       function handleNodeContextMenu(event: MouseEvent, d: Node) {
         event.preventDefault();
         event.stopPropagation();
-
-        const container = containerRef.current;
-        const svgEl = svgRef.current;
-
-        if (!container || !svgEl) return;
-
-        const [mx, my] = d3.pointer(event, container);
-
-        setMenu({ node: d, x: mx + 12, y: my - 12 });
+        setMenu({ node: d }); // full-page menu
       }
 
       const connectChildren: ConnectChildrenFn = (parent, titles) => {
+        if (!simulation) return;
+
         const { newNodes, newLinks } = buildChildren(parent, titles);
 
         nodes = [...nodes, ...newNodes];
@@ -198,20 +194,18 @@ const ForceGraph: React.FC = () => {
       });
     };
 
-    run().catch((e) => console.error(e));
+    run().catch(console.error);
 
     return () => {
-      connectChildrenRef.current = null;
-      if (svgRef.current) {
-        d3.select(svgRef.current).selectAll("*").remove();
-      }
+      alive = false;
+      simulation?.stop();
     };
   }, []);
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[70vh] rounded-xl border border-slate-200 bg-slate-600 text-slate-100 overflow-hidden"
+      className="fixed inset-0 bg-slate-600 text-slate-100 overflow-hidden"
     >
       <svg
         ref={svgRef}
@@ -221,8 +215,6 @@ const ForceGraph: React.FC = () => {
 
       {menu && (
         <NodeContextMenu
-          x={menu.x}
-          y={menu.y}
           node={menu.node}
           closeMenu={() => setMenu(null)}
           connectChildren={(parent, titles) =>
