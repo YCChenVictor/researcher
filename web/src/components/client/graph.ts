@@ -1,7 +1,7 @@
 import type { Simulation } from "d3";
 import * as d3 from "d3";
 
-import type { Node, Link } from "../types/graph";
+import type { Node, Link } from "../../types/graph";
 
 export type NodeClickDeps = {
   setSelectedSource: (node: Node | null) => void;
@@ -91,7 +91,6 @@ const handleAddNodeAt = (
   const newNode: Node = {
     key: `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
-    color: "#ff8800",
     x,
     y,
   };
