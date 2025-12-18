@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { articleBody, getQuerySchema } from "../../schemas/articles";
-import { upsert, get } from "../../server/article";
+import {
+  articleBody,
+  deleteQuerySchema,
+  getQuerySchema,
+} from "../../schemas/articles";
+import { upsert, get, destroy } from "../../server/article";
 
-async function handlePostArticle(req: NextRequest) {
+const handlePostArticle = async (req: NextRequest) => {
   try {
     const json = await req.json();
     const { path, content } = articleBody.parse(json);
@@ -26,12 +30,12 @@ async function handlePostArticle(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+};
 
-async function handleGetArticle(
+const handleGetArticle = async (
   req: NextRequest,
   deps: { get: (key: string) => Promise<string | null> } = { get },
-) {
+) => {
   try {
     const url = new URL(req.url);
     const { key } = getQuerySchema.parse({
@@ -58,7 +62,7 @@ async function handleGetArticle(
       { status: 500 },
     );
   }
-}
+};
 
 const handlePutArticle = async (req: NextRequest) => {
   try {
@@ -82,6 +86,41 @@ const handlePutArticle = async (req: NextRequest) => {
   }
 };
 
+const handleDeleteArticle = async (
+  req: NextRequest,
+  deps: { destroy: (key: string) => Promise<{ path: string } | null> } = {
+    destroy,
+  },
+) => {
+  try {
+    const url = new URL(req.url);
+    const { key } = deleteQuerySchema.parse({
+      key: url.searchParams.get("key"),
+    });
+
+    const result = await deps.destroy(key);
+    if (!result) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ ok: true, deleted: result }, { status: 200 });
+    // or: return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid query", issues: err.issues },
+        { status: 400 },
+      );
+    }
+
+    console.error(err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+};
+
 async function POST(req: NextRequest) {
   return handlePostArticle(req);
 }
@@ -94,11 +133,17 @@ async function PUT(req: NextRequest) {
   return handlePutArticle(req);
 }
 
+async function DELETE(req: NextRequest) {
+  return handleDeleteArticle(req);
+}
+
 export {
   handlePutArticle,
   handleGetArticle,
   handlePostArticle,
+  handleDeleteArticle,
   POST,
   GET,
   PUT,
+  DELETE,
 };

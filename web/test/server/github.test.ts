@@ -11,7 +11,7 @@ vi.mock("../../src/app/server/githubClient", () => ({
 }));
 
 import { githubClient } from "../../src/app/server/githubClient";
-import { getFile } from "../../src/app/server/github";
+import { get as getFromGithub } from "../../src/app/server/github";
 
 const getContentMock = githubClient.rest.repos
   .getContent as unknown as ReturnType<typeof vi.fn>;
@@ -30,7 +30,7 @@ describe("getFile", () => {
       },
     });
 
-    await expect(getFile("articles/a.md")).resolves.toEqual({
+    await expect(getFromGithub("articles/a.md")).resolves.toEqual({
       content: "hello",
       sha: "sha123",
     });

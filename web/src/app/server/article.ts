@@ -1,7 +1,11 @@
-import { getFile, put } from "./github";
+import {
+  get as getFromGithub,
+  put,
+  destroy as destroyInGithub,
+} from "./github";
 
 const upsert = async (filePath: string, content: string) => {
-  const file = await getFile(filePath);
+  const file = await getFromGithub(filePath);
   const sha = file?.sha;
 
   const data = await put({
@@ -11,18 +15,35 @@ const upsert = async (filePath: string, content: string) => {
     ...(sha ? { sha } : {}),
   });
 
+  const commitSha = data.commit?.sha;
+  if (!commitSha) throw new Error("GitHub upsert: missing commit sha");
+
   return {
     path: data.content?.path ?? filePath,
-    sha: data.commit.sha,
+    sha: commitSha,
   };
 };
 
 const get = async (filePath: string): Promise<string | null> => {
-  const file = await getFile(`articles/${filePath}`);
+  const file = await getFromGithub(`articles/${filePath}`);
   if (!file) return null;
 
-  // getFile() already returns utf8 text in file.content
   return file.content ?? "";
 };
 
-export { upsert, get };
+const destroy = async (
+  filePath: string,
+): Promise<{ path: string; sha: string } | null> => {
+  const fullPath = `articles/${filePath}`;
+
+  const file = await getFromGithub(fullPath);
+  if (!file?.sha) return null;
+
+  return destroyInGithub({
+    filePath: fullPath,
+    message: "Delete article",
+    sha: file.sha,
+  });
+};
+
+export { upsert, get, destroy };

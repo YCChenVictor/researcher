@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { Node } from "../types/graph";
-import { decompose } from "./client/graph";
-import { get } from "./client/article";
 
-export type MenuActionId = "decompose" | "view" | "edit" | "init" | "close";
+import { decompose, redirect } from "./client/graph";
+// import { destroy as destroyLink } from "./client/graph/link";
+import { create, get as getArticle } from "./client/article";
+
+export type MenuActionId =
+  | "decompose"
+  | "view"
+  | "edit"
+  | "init"
+  | "close"
+  | "destroy";
 
 type MenuOption = {
   label: string;
@@ -16,9 +24,7 @@ type NodeContextMenuProps = {
   node: Node;
   closeMenu: () => void;
   connectChildren: (parent: Node, titles: string[]) => void;
-  initArticle: (node: Node) => void | Promise<void>;
-  navigate?: (url: string) => void;
-  getArticle?: (key: string) => Promise<unknown | null>;
+  removeNode: (n: Node) => Promise<void>;
 };
 
 const encodePath = (p: string) =>
@@ -37,9 +43,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   node,
   closeMenu,
   connectChildren,
-  initArticle,
-  navigate,
-  getArticle,
+  removeNode,
 }) => {
   const [hasArticle, setHasArticle] = useState<boolean | null>(null);
 
@@ -49,7 +53,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
     (async () => {
       try {
-        const article = await (getArticle ?? get)(node.key);
+        const article = await getArticle(node.key);
         if (!alive) return;
         setHasArticle(article != null);
       } catch {
@@ -61,12 +65,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     return () => {
       alive = false;
     };
-  }, [node.key, getArticle]);
-
-  const doNavigate = useMemo(
-    () => navigate ?? ((url: string) => window.location.assign(url)),
-    [navigate],
-  );
+  }, [node.key]);
 
   const options = useMemo<MenuOption[]>(() => {
     const base: MenuOption[] = [
@@ -75,14 +74,13 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         action: "decompose",
         hint: "Ask AI to generate child topics and link them under this node.",
       },
+      { label: "Close", action: "close", hint: "Dismiss this menu." },
+      {
+        label: "Destroy",
+        action: "destroy",
+        hint: "Destroy this node and article file.",
+      },
     ];
-
-    if (hasArticle === null) {
-      return [
-        ...base,
-        { label: "Close", action: "close", hint: "Dismiss this menu." },
-      ];
-    }
 
     const extra: MenuOption[] = hasArticle
       ? [
@@ -105,29 +103,27 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           },
         ];
 
-    return [
-      ...base,
-      ...extra,
-      { label: "Close", action: "close", hint: "Dismiss this menu." },
-    ];
+    return [...base, ...extra];
   }, [hasArticle]);
 
   const handleClick = async (action: MenuActionId) => {
     switch (action) {
+      case "destroy":
+        await removeNode(node);
+        closeMenu();
+        return;
       case "close":
         closeMenu();
         return;
       case "init":
-        await initArticle(node);
+        await create(node);
         closeMenu();
         return;
       case "view":
-        doNavigate(`/article?file=${encodeURIComponent(node.key)}`);
-        closeMenu();
+        redirect(`/article?file=${encodeURIComponent(node.key)}`);
         return;
       case "edit":
-        doNavigate(toTinaDocEditUrl(node.key));
-        closeMenu();
+        redirect(toTinaDocEditUrl(node.key));
         return;
       case "decompose":
         try {

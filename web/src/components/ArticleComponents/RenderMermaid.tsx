@@ -22,7 +22,7 @@ const RenderMermaid: React.FC<Props> = ({ children }) => {
         mermaid.initialize({ startOnLoad: false });
 
         const code = typeof children === "string" ? children : String(children);
-        const { svg } = await mermaid.render(idRef.current!, code);
+        const svg = await mermaid.render(idRef.current!, code);
 
         if (alive) setSvg(svg);
       } catch (e) {

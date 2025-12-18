@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, type Mock } from "vitest";
 
 vi.mock("../../src/app/server/graph", () => {
   const upsert = vi.fn(async (_path: string, _content: string) => ({
     path: "graph.json",
     sha: "test-sha",
   }));
-  const get = vi.fn(async () => ({
-    nodes: [],
-    links: [],
-  }));
+  const get = vi.fn(async () => ({ nodes: [], links: [] }));
 
   return { upsert, get };
 });
@@ -16,8 +13,8 @@ vi.mock("../../src/app/server/graph", () => {
 import { GET, POST } from "../../src/app/api/graph/route";
 import { upsert, get } from "../../src/app/server/graph";
 
-const mockedUpsert = upsert as unknown as vi.Mock;
-const mockedGet = get as unknown as vi.Mock;
+const mockedUpsert = upsert as unknown as Mock;
+const mockedGet = get as unknown as Mock;
 
 afterEach(() => {
   vi.clearAllMocks();
