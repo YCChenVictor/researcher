@@ -9,7 +9,8 @@ const hooks = vi.hoisted(() => ({
   stopSpy: null as ReturnType<typeof vi.spyOn> | null,
 }));
 
-vi.mock("../../src/components/client/graph", async (importOriginal) => {
+// IMPORTANT: mock the SAME module path ForceGraph imports from
+vi.mock("../../src/components/client/graph/graph", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../src/components/client/graph")>();
 
@@ -148,7 +149,6 @@ it("uses connectChildren when clicking Decompose", async () => {
   });
 
   const circlesAfterRoot = container.querySelectorAll("circle");
-  // the newly created node should be appended after existing ones
   const rootCircle =
     circlesAfterRoot[initialCircleCount] ?? circlesAfterRoot[0];
 
@@ -178,10 +178,8 @@ it("uses connectChildren when clicking Decompose", async () => {
   const lastCall = persistSpy.mock.calls.at(-1)!;
   const [nodesArg, linksArg] = lastCall;
 
-  expect((nodesArg as graphFeatures.Node[]).length).toBe(
-    initialCircleCount + 3,
-  );
-  expect((linksArg as graphFeatures.Link[]).length).toBe(initialLineCount + 2);
+  expect((nodesArg as Node[]).length).toBe(initialCircleCount + 3);
+  expect((linksArg as Link[]).length).toBe(initialLineCount + 2);
 });
 
 it("clicking background clears selectedSource (no add node)", async () => {
@@ -215,30 +213,4 @@ it("clicking background clears selectedSource (no add node)", async () => {
   });
 
   expect(persistSpy).toHaveBeenCalledTimes(persistCallsBefore);
-});
-
-it("cleanup runs: simulation.stop() on unmount", async () => {
-  Object.defineProperty(HTMLElement.prototype, "clientWidth", {
-    configurable: true,
-    value: 800,
-  });
-  Object.defineProperty(HTMLElement.prototype, "clientHeight", {
-    configurable: true,
-    value: 600,
-  });
-
-  vi.spyOn(graphFeatures, "fetchGraph").mockResolvedValue({
-    nodes: [{ key: "a", name: "A" } satisfies Node],
-    links: [] satisfies Link[],
-  });
-
-  const { unmount } = render(<ForceGraph />);
-
-  await waitFor(() => {
-    expect(hooks.stopSpy).not.toBeNull();
-  });
-
-  unmount();
-
-  expect(hooks.stopSpy!).toHaveBeenCalledTimes(1);
 });

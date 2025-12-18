@@ -6,13 +6,13 @@ import * as github from "../../src/app/server/github";
 type PutResp = { content?: { path?: string } | null; commit: { sha: string } };
 
 const asGetFileRet = (x: { sha?: string; content?: string } | null) =>
-  x as unknown as Awaited<ReturnType<typeof github.getFile>>;
+  x as unknown as Awaited<ReturnType<typeof github.get>>;
 
 const asPutRet = (x: PutResp) =>
   x as unknown as Awaited<ReturnType<typeof github.put>>;
 
 describe("upsert", () => {
-  const getFileSpy = vi.spyOn(github, "getFile");
+  const getFileSpy = vi.spyOn(github, "get");
   const putSpy = vi.spyOn(github, "put");
 
   beforeEach(() => {
@@ -60,7 +60,7 @@ describe("upsert", () => {
 });
 
 describe("get", () => {
-  const getFileSpy = vi.spyOn(github, "getFile");
+  const getFileSpy = vi.spyOn(github, "get");
 
   beforeEach(() => {
     vi.resetAllMocks();

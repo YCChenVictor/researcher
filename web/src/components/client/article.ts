@@ -1,31 +1,9 @@
-import type { Node } from "../types/graph";
+import type { Node } from "../../types/graph";
 
 type ArticleApiResponse = {
   ok: boolean;
   path: string;
   content: string;
-};
-
-const get = async (
-  key: string,
-): Promise<{ path: string; content: string } | null> => {
-  const res = await fetch(`/api/articles?key=${encodeURIComponent(key)}.md`);
-
-  if (res.status === 404) {
-    return null;
-  }
-
-  if (!res.ok) {
-    throw new Error(`Failed to load article: ${res.status}`);
-  }
-
-  const data = (await res.json()) as ArticleApiResponse;
-
-  if (!data.ok) {
-    throw new Error("Article API returned not ok");
-  }
-
-  return { path: data.path, content: data.content };
 };
 
 const create = async (node: Node) => {
@@ -48,6 +26,28 @@ const create = async (node: Node) => {
   } catch (err) {
     console.error("Init article error", err);
   }
+};
+
+const get = async (
+  key: string,
+): Promise<{ path: string; content: string } | null> => {
+  const res = await fetch(`/api/articles?key=${encodeURIComponent(key)}.md`);
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to load article: ${res.status}`);
+  }
+
+  const data = (await res.json()) as ArticleApiResponse;
+
+  if (!data.ok) {
+    throw new Error("Article API returned not ok");
+  }
+
+  return { path: data.path, content: data.content };
 };
 
 const update = async (args: {
@@ -74,4 +74,27 @@ const update = async (args: {
   return { path: data.file.path, sha: data.file.sha };
 };
 
-export { create, get, update };
+const destroy = async (key: string): Promise<{ path: string }> => {
+  const mdKey = key.endsWith(".md") ? key : `${key}.md`;
+  const path = `articles/${mdKey}`;
+
+  const res = await fetch("/api/articles", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+
+  if (res.status === 404) return { path };
+
+  if (!res.ok) throw new Error(`Delete article failed: ${res.status}`);
+
+  const data = (await res.json()) as
+    | { ok: true; file?: { path: string } }
+    | { ok: false; error?: string };
+
+  if (!data.ok) throw new Error(data.error ?? "Article API returned not ok");
+
+  return { path: data.file?.path ?? path };
+};
+
+export { create, get, update, destroy };

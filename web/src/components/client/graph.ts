@@ -1,7 +1,6 @@
-import type { Simulation } from "d3";
 import * as d3 from "d3";
 
-import type { Node, Link } from "../../types/graph";
+import type { Node, Link, Runtime, GraphLayers, Deps } from "../../types/graph";
 
 export type NodeClickDeps = {
   setSelectedSource: (node: Node | null) => void;
@@ -13,6 +12,24 @@ export type ShowContextMenuDeps = {
   zoomG: d3.Selection<SVGGElement, unknown, null, undefined>;
   removeContextMenu: () => void;
   log?: (msg: string, node: Node) => void;
+};
+
+// Graph data
+const persistGraph = async (nodes: Node[], links: Link[]) => {
+  const graph = {
+    nodes: serializeNodes(nodes),
+    links: serializeLinks(links),
+  };
+
+  const res = await fetch("/api/graph", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ graph }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to persist graph: ${res.status}`);
+  }
 };
 
 const handleNodeClickLogic = (
@@ -48,61 +65,24 @@ const handleNodeClickLogic = (
   setSelectedSource(null);
 };
 
-const fetchGraph = async (): Promise<{
-  nodes: Node[];
-  links: Link[];
-}> => {
+const fetchGraph = async (): Promise<{ nodes: Node[]; links: Link[] }> => {
   const res = await fetch("/api/graph");
-  if (!res.ok) {
-    throw new Error(`Failed to load graph: ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`Failed to load graph: ${res.status}`);
 
-  const { graph } = (await res.json()) as GraphApiResponse;
+  const { graph } = (await res.json()) as {
+    graph: {
+      nodes: Node[];
+      links: { source: string; target: string }[];
+    } | null;
+  };
 
-  if (!graph) {
-    return { nodes: [], links: [] };
-  }
+  if (!graph) return { nodes: [], links: [] };
 
   return {
     nodes: graph.nodes,
-    links: graph.links.map((l) => ({
-      source: l.source,
-      target: l.target,
-    })),
+    links: graph.links.map((l) => ({ source: l.source, target: l.target })),
   };
 };
-
-const handleAddNodeAt = (
-  x: number,
-  y: number,
-  deps: {
-    nodes: Node[];
-    links: Link[];
-    setNodes: (next: Node[]) => void;
-    simulation: Simulation<Node, Link>;
-    updateNodes: () => void;
-  },
-) => {
-  const { nodes, setNodes, simulation, updateNodes } = deps;
-
-  const name = window.prompt("Topic?");
-  if (!name) return;
-
-  const newNode: Node = {
-    key: `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name,
-    x,
-    y,
-  };
-
-  const nextNodes = [...nodes, newNode];
-
-  setNodes(nextNodes);
-  simulation.nodes(nextNodes);
-  simulation.alpha(1).restart();
-  updateNodes();
-};
-
 const buildChildren = (
   parent: Node,
   titles: string[],
@@ -131,23 +111,21 @@ const buildChildren = (
   return { newNodes, newLinks };
 };
 
-const decompose: DecomposeFn = async (nodeData) => {
+const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   const res = await fetch("/api/decompose", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      topic: nodeData.name,
-      numberOfSubTopic: 5,
-    }),
+    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 5 }),
   });
 
-  if (!res.ok) {
-    throw new Error(`Decompose failed: ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`Decompose failed: ${res.status}`);
 
-  const json = (await res.json()) as DecomposeResponse;
+  const json = (await res.json()) as {
+    answer: { topics: { title: string }[] };
+  };
   return json.answer.topics.map((t) => t.title);
 };
+
 const serializeLinks = (links: Link[]) =>
   links.map((l) => ({
     source: typeof l.source === "string" ? l.source : l.source.key,
@@ -157,20 +135,6 @@ const serializeLinks = (links: Link[]) =>
 const serializeNodes = (nodes: Node[]) =>
   nodes.map(({ vx: _vx, vy: _vy, index: _index, ...rest }) => rest);
 
-const persistGraph = (nodes: Node[], links: Link[]) => {
-  const graph = {
-    nodes: serializeNodes(nodes),
-    links: serializeLinks(links),
-  };
-
-  void fetch("/api/graph", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ graph }),
-  }).catch((err) => console.error("Failed to persist graph", err));
-};
-
-// D3 / SVG helpers
 const setupSvg = (
   svgEl: SVGSVGElement,
   width: number,
@@ -288,7 +252,201 @@ const positionLinksOnTick = (
     );
 };
 
+const endKey = (end: Link["source"] | Link["target"]) =>
+  typeof end === "string" ? end : end.key;
+
+const updateNodeHighlight = (rt: Runtime) => {
+  rt.nodeSel
+    .attr("stroke", (d) => (rt.selectedSource?.key === d.key ? "#000" : null))
+    .attr("stroke-width", (d) => (rt.selectedSource?.key === d.key ? 2 : 0));
+};
+
+const setSelectedSource = (rt: Runtime, next: Node | null) => {
+  rt.selectedSource = next;
+  updateNodeHighlight(rt);
+};
+
+const createNodeInteractions = (rt: Runtime) => {
+  const onClick = (event: MouseEvent, d: Node) => {
+    handleNodeClickLogic(event, d, rt.selectedSource, {
+      setSelectedSource: (n) => setSelectedSource(rt, n),
+      addLink: (sourceNode, targetNode) => addLink(rt, sourceNode, targetNode),
+    });
+  };
+
+  const onContextMenu = (event: MouseEvent, d: Node) => {
+    event.preventDefault();
+    event.stopPropagation();
+    rt.setMenu({ node: d });
+  };
+
+  return { onClick, onContextMenu };
+};
+
+const bindLinkForce = (
+  simulation: d3.Simulation<Node, Link>,
+  links: Link[],
+) => {
+  const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
+  linkForce.id((d) => d.key);
+  linkForce.links(links);
+};
+
+const updateLinks = (rt: Runtime) => {
+  rt.linkSel = renderLinks(rt.linkGroup, rt.links);
+};
+
+const addLink = (rt: Runtime, sourceNode: Node, targetNode: Node) => {
+  rt.links = [...rt.links, { source: sourceNode.key, target: targetNode.key }];
+
+  bindLinkForce(rt.simulation, rt.links);
+  updateLinks(rt);
+  rt.simulation.alpha(1).restart();
+
+  rt.persist(rt.nodes, rt.links);
+};
+
+const updateNodes = (
+  rt: Runtime,
+  handlers: ReturnType<typeof createNodeInteractions>,
+) => {
+  // These events will be bind to all the nodes again
+  rt.nodeSel = rt.nodeSel
+    .data(rt.nodes, (d) => d.key)
+    .join(
+      (enter) => enter.append("circle").attr("r", 10).call(rt.drag),
+      (update) => update.call(rt.drag),
+      (exit) => exit.remove(),
+    )
+    .on("click", handlers.onClick)
+    .on("contextmenu", handlers.onContextMenu);
+
+  rt.labelSel = rt.labelSel
+    .data(rt.nodes, (d) => d.key)
+    .join(
+      (enter) =>
+        enter
+          .append("text")
+          .attr("font-size", 12)
+          .attr("fill", "#000")
+          .attr("text-anchor", "middle"),
+      (update) => update,
+      (exit) => exit.remove(),
+    )
+    .text((d) => d.name)
+    .on("click", (event, d) =>
+      handlers.onClick(event as unknown as MouseEvent, d),
+    )
+    .on("contextmenu", (event, d) =>
+      handlers.onContextMenu(event as unknown as MouseEvent, d),
+    );
+
+  updateNodeHighlight(rt);
+};
+
+const removeNode = async (
+  rt: Runtime,
+  toRemove: Node,
+  handlers: ReturnType<typeof createNodeInteractions>,
+) => {
+  const key = toRemove.key;
+
+  if (rt.selectedSource?.key === key) setSelectedSource(rt, null);
+
+  rt.links = rt.links.filter(
+    (l) => endKey(l.source) !== key && endKey(l.target) !== key,
+  );
+  rt.nodes = rt.nodes.filter((n) => n.key !== key);
+
+  rt.simulation.nodes(rt.nodes);
+  bindLinkForce(rt.simulation, rt.links);
+
+  updateLinks(rt);
+  updateNodes(rt, handlers);
+
+  rt.simulation.alpha(1).restart();
+
+  await persistGraph(rt.nodes, rt.links);
+
+  rt.setMenu(null);
+};
+
+const connectChildren = (
+  rt: Runtime,
+  parent: Node,
+  titles: string[],
+  handlers: ReturnType<typeof createNodeInteractions>,
+) => {
+  const { newNodes, newLinks } = buildChildren(parent, titles);
+
+  rt.nodes = [...rt.nodes, ...newNodes];
+  rt.links = [...rt.links, ...newLinks];
+
+  rt.simulation.nodes(rt.nodes);
+  bindLinkForce(rt.simulation, rt.links);
+
+  updateLinks(rt);
+  updateNodes(rt, handlers);
+
+  rt.simulation.alpha(1).restart();
+  rt.persist(rt.nodes, rt.links);
+};
+
+const onTick = (rt: Runtime) => {
+  if (rt.linkSel) positionLinksOnTick(rt.linkSel);
+
+  rt.nodeSel.attr("cx", (d) => d.x ?? 0).attr("cy", (d) => d.y ?? 0);
+  rt.labelSel.attr("x", (d) => d.x ?? 0).attr("y", (d) => (d.y ?? 0) - 14);
+};
+
+const handleAddNodeAt = (x: number, y: number, deps: Deps) => {
+  const { getNodes, setNodes, simulation, updateNodes } = deps;
+
+  const name = window.prompt("Topic?");
+  if (!name) return;
+
+  const newNode: Node = {
+    key:
+      crypto.randomUUID?.() ??
+      `custom-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    x,
+    y,
+    fx: x,
+    fy: y,
+  };
+
+  const next = [...getNodes(), newNode];
+  setNodes(next);
+  simulation.nodes(next);
+  simulation.alpha(1).restart();
+  updateNodes();
+
+  return next;
+};
+
+const addNodeAt = (
+  rt: Runtime,
+  x: number,
+  y: number,
+  handlers: ReturnType<typeof createNodeInteractions>,
+) => {
+  const next = handleAddNodeAt(x, y, {
+    getNodes: () => rt.nodes,
+    setNodes: (n: Node[]) => {
+      rt.nodes = n;
+    },
+    simulation: rt.simulation,
+    updateNodes: () => updateNodes(rt, handlers),
+  });
+
+  if (next) rt.persist(rt.nodes, rt.links);
+};
+
+const redirect = (url: string) => window.location.assign(url);
+
 export {
+  addNodeAt,
   createSimulation,
   createDrag,
   setupSvg,
@@ -297,7 +455,15 @@ export {
   persistGraph,
   buildChildren,
   handleNodeClickLogic,
-  handleAddNodeAt,
   renderLinks,
   positionLinksOnTick,
+  removeNode,
+  connectChildren,
+  createNodeInteractions,
+  updateLinks,
+  updateNodes,
+  setSelectedSource,
+  onTick,
+  redirect,
+  endKey,
 };
