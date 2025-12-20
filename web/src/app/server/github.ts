@@ -46,7 +46,7 @@ const hasStatus = (
   );
 };
 
-const getFile = async (filePath: string): Promise<GithubFile | null> => {
+const get = async (filePath: string): Promise<GithubFile | null> => {
   try {
     const { data } = await githubClient.rest.repos.getContent({
       owner,
@@ -114,44 +114,59 @@ const put = async ({
   return data;
 };
 
-const list = async (): Promise<ArticleFile[]> => {
-  const { data } = await octokit.request(
-    "GET /repos/{owner}/{repo}/contents/{path}",
-    { owner: owner, repo: repo, path: "", ref: branch },
-  );
+const list = async (dirPath = ""): Promise<ArticleFile[]> => {
+  type GetContentData =
+    Endpoints["GET /repos/{owner}/{repo}/contents/{path}"]["response"]["data"];
+
+  type ArrayItem<T> = T extends readonly (infer U)[] ? U : never; // distributive
+  type ContentItem = ArrayItem<GetContentData>;
+  type FileItem = ContentItem & { type: "file" };
+
+  const isMdFile = (i: ContentItem): i is FileItem =>
+    i.type === "file" && i.name.endsWith(".md");
+
+  const { data } = await githubClient.rest.repos.getContent({
+    owner,
+    repo,
+    path: dirPath,
+    ref: branch,
+  });
 
   if (!Array.isArray(data)) return [];
 
-  const result = data
-    .filter((i) => i.type === "file" && i.name.endsWith(".md"))
-    .map((i) => ({ name: i.name, path: i.path, sha: i.sha, size: i.size }));
-
-  return result;
+  return (data as readonly ContentItem[]).filter(isMdFile).map((i) => ({
+    name: i.name,
+    path: i.path,
+    sha: i.sha,
+    size: i.size ?? 0,
+  }));
 };
 
-const destroy = async (filename: string): Promise<void> => {
-  const filePath = `posts/${filename}`;
-
-  // Get file metadata to retrieve SHA
-  const { data } = await octokit.request(
-    "GET /repos/{owner}/{repo}/contents/{path}",
-    { owner: owner, repo: repo, path: filePath, ref: branch },
-  );
-
-  console.log(data);
-
-  const sha = Array.isArray(data) ? "" : data.sha;
-  if (!sha) throw new Error("File not found or sha missing");
-
-  // Delete the file
-  await octokit.request("DELETE /repos/{owner}/{repo}/contents/{path}", {
-    owner: owner,
-    repo: repo,
+const destroy = async ({
+  filePath,
+  message,
+  sha,
+}: {
+  filePath: string;
+  message: string;
+  sha: string;
+}): Promise<{ path: string; sha: string }> => {
+  const res = await githubClient.rest.repos.deleteFile({
+    owner,
+    repo,
     path: filePath,
-    message: `delete ${filename}`,
+    message,
     sha,
-    branch: branch,
+    ...(branch ? { branch } : {}),
   });
+
+  const commitSha = res.data.commit?.sha;
+  if (!commitSha) throw new Error("GitHub deleteFile: missing commit sha");
+
+  return {
+    path: res.data.content?.path ?? filePath,
+    sha: commitSha,
+  };
 };
 
-export { upsert, assertRepoAndBranchExist, list, getFile, destroy, put };
+export { assertRepoAndBranchExist, list, get, destroy, put };

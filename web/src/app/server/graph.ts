@@ -1,6 +1,6 @@
 import { Octokit } from "octokit";
 
-import { getFile } from "./github";
+import { get as getFromGithub } from "./github";
 import { GITHUB_BRANCH, GITHUB_OWNER, GITHUB_REPO } from "./env.server";
 
 const token = process.env.GITHUB_TOKEN;
@@ -16,7 +16,7 @@ const GRAPH_PATH = "graph.json";
 
 async function get(): Promise<GraphPayload> {
   try {
-    const file = await getFile(GRAPH_PATH);
+    const file = await getFromGithub(GRAPH_PATH);
 
     if (!file) {
       return { nodes: [], links: [] };

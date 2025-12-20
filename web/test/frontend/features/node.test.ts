@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
+import type { Node } from "../../../src/types/graph";
 import {
   handleNodeClickLogic,
   type NodeClickDeps,
@@ -30,7 +31,7 @@ const makeDeps = () => {
 
 describe("handleNodeClickLogic", () => {
   it("opens window when metaKey or ctrlKey pressed", () => {
-    const node: TestNode = { key: "https://example.com" };
+    const node: Node = { name: "test", key: "https://example.com" };
     const event = makeEvent({ metaKey: true });
     const { deps, openWindow, setSelectedSource, addLink } = makeDeps();
 
@@ -43,7 +44,7 @@ describe("handleNodeClickLogic", () => {
   });
 
   it("clears selection when clicking the same selected node", () => {
-    const node: TestNode = { key: "a" };
+    const node: Node = { name: "test", key: "a" };
     const event = makeEvent();
     const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
 
@@ -56,7 +57,7 @@ describe("handleNodeClickLogic", () => {
   });
 
   it("selects node when nothing is selected", () => {
-    const node: TestNode = { key: "a" };
+    const node: Node = { name: "test", key: "a" };
     const event = makeEvent();
     const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
 
@@ -69,8 +70,8 @@ describe("handleNodeClickLogic", () => {
   });
 
   it("creates link when another node is selected", () => {
-    const source: TestNode = { key: "source" };
-    const target: TestNode = { key: "target" };
+    const source: Node = { name: "test", key: "source" };
+    const target: Node = { name: "test", key: "target" };
     const event = makeEvent();
     const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
 

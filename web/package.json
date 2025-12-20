@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "TINA_PUBLIC_IS_LOCAL=true tinacms dev -c \"next dev\"",
     "test": "vitest run",
+    "test:fix": "vitest run -u",
     "test:coverage": "vitest run --coverage",
     "build": "tinacms build && next build",
     "start": "next start",
-    "format": "yarn lint --fix",
+    "format": "yarn typecheck && yarn lint --fix",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "react-router-hash-link": "^2.4.3",
     "react-syntax-highlighter": "^16.1.0",
     "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4",
     "remark-math": "^6.0.0",
     "tinacms": "^3.1.0",
     "vitest": "^4.0.15"
@@ -42,6 +45,8 @@
     "@types/node": "^25.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-router-hash-link": "^2.4.9",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@vitest/coverage-v8": "4.0.15",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.1",

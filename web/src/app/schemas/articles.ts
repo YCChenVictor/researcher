@@ -9,4 +9,8 @@ const getQuerySchema = z.object({
   key: z.string().min(1),
 });
 
-export { articleBody, getQuerySchema };
+const deleteQuerySchema = z.object({
+  key: z.string().min(1),
+});
+
+export { articleBody, getQuerySchema, deleteQuerySchema };
