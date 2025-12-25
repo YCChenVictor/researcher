@@ -6,6 +6,9 @@ type ArticleApiResponse = {
   content: string;
 };
 
+const yamlQuote = (s: string) =>
+  `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
 const create = async (node: Node) => {
   try {
     const key = node.key.endsWith(".md") ? node.key : `${node.key}.md`;
@@ -15,7 +18,7 @@ const create = async (node: Node) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         path: `articles/${key}`,
-        content: `---\ntitle: ${node.name}\n---\n`,
+        content: `---\ntitle: ${yamlQuote(node.name)}\n---\n`,
       }),
     });
 

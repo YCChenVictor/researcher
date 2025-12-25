@@ -83,7 +83,7 @@ it('clicking "Init" calls create(node) and then closeMenu()', async () => {
 it('clicking "Edit" redirects', async () => {
   const user = userEvent.setup();
 
-  const node = { key: "content/articles/中文.md", name: "x" } satisfies NodeT;
+  const node = { key: "content/articles/中文", name: "x" } satisfies NodeT;
 
   vi.mocked(getArticle).mockResolvedValueOnce({ path: "p", content: "c" });
 
@@ -106,7 +106,9 @@ it('clicking "Edit" redirects', async () => {
   const redirectedUrl = redirectMock.mock.calls[0][0];
   const fileName = node.key.split("/").pop()!;
 
-  expect(redirectedUrl).toContain(`/post/${encodeURIComponent(fileName)}`);
+  expect(redirectedUrl).toContain(
+    `/keystatic/branch/main/collection/posts/item/${encodeURIComponent(fileName)}`,
+  );
 });
 
 it('clicking "Destroy" calls removeNode(node) then closeMenu()', async () => {
