@@ -120,7 +120,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         closeMenu();
         return;
       case "view":
-        redirect(`/article?file=${encodeURIComponent(node.key)}`);
+        redirect(`/articles/${encodeURIComponent(node.key)}`);
         return;
       case "edit":
         redirect(toTinaDocEditUrl(node.key));
