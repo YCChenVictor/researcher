@@ -5,7 +5,7 @@ type Props = React.PropsWithChildren;
 
 const RenderMermaid: React.FC<Props> = ({ children }) => {
   const idRef = useRef<string | null>(null);
-  const [svg, setSvg] = useState("");
+  const [svg, setSvg] = useState<string>("");
 
   useEffect(() => {
     if (!idRef.current) {
@@ -22,9 +22,12 @@ const RenderMermaid: React.FC<Props> = ({ children }) => {
         mermaid.initialize({ startOnLoad: false });
 
         const code = typeof children === "string" ? children : String(children);
-        const svg = await mermaid.render(idRef.current!, code);
+        const result = await mermaid.render(idRef.current!, code);
 
-        if (alive) setSvg(svg);
+        if (!alive) return;
+
+        // mermaid.render() returns a RenderResult object
+        setSvg(result.svg);
       } catch (e) {
         console.error(e);
         if (alive) setSvg("");
