@@ -27,16 +27,14 @@ type NodeContextMenuProps = {
   removeNode: (n: Node) => Promise<void>;
 };
 
-const encodePath = (p: string) =>
-  p.split("/").map(encodeURIComponent).join("/");
+const toKeystaticEntryEditUrl = (fullPath: string) => {
+  const collectionKey = "posts";
 
-const toTinaDocEditUrl = (fullPath: string) => {
-  const collection = "post";
-  const baseDir = "content/articles/";
-  const relative = fullPath.startsWith(baseDir)
-    ? fullPath.slice(baseDir.length)
-    : fullPath;
-  return `/edit/index.html#/collections/edit/${collection}/${encodePath(relative)}`;
+  const p = fullPath.replaceAll("\\", "/").replace(/^\/+/, "");
+  const last = p.split("/").filter(Boolean).at(-1) ?? "";
+  const key = last.includes(".") ? last.slice(0, last.lastIndexOf(".")) : last;
+
+  return `/keystatic/branch/main/collection/${collectionKey}/item/${encodeURIComponent(key)}`;
 };
 
 const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
@@ -123,7 +121,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         redirect(`/article?file=${encodeURIComponent(node.key)}`);
         return;
       case "edit":
-        redirect(toTinaDocEditUrl(node.key));
+        redirect(toKeystaticEntryEditUrl(node.key));
         return;
       case "decompose":
         try {
