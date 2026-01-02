@@ -54,8 +54,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
     (async () => {
       try {
-        console.log("xzcvxzvc");
-        console.log(node.key);
         const article = await getArticle(`${node.key}`);
         if (!alive) return;
         setHasArticle(article != null);

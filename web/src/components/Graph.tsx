@@ -39,8 +39,7 @@ export const ForceGraph: React.FC = () => {
       if (!svgEl || !containerEl) return;
 
       const initial = await fetchGraph();
-      console.log("zxcvzxcv");
-      console.log(initial);
+
       if (!alive) return;
 
       const width = containerEl.clientWidth;

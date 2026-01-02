@@ -36,12 +36,8 @@ const destroy = async (
 ): Promise<{ path: string; sha: string } | null> => {
   const fullPath = `articles/${filePath}.md`;
 
-  console.log("xzcvxcvvxzczxv");
-
   const file = await getFromGithub(fullPath);
   if (!file?.sha) return null;
-
-  console.log("xzcvxcvvxzczxv");
 
   return destroyInGithub({
     filePath: fullPath,

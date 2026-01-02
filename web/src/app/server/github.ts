@@ -48,19 +48,12 @@ const hasStatus = (
 
 const get = async (filePath: string): Promise<GithubFile | null> => {
   try {
-    console.log("AAA");
-    console.log(owner);
-    console.log(repo);
-    console.log(filePath);
-    console.log(branch);
     const { data } = await githubClient.rest.repos.getContent({
       owner,
       repo,
       path: filePath,
       ref: branch,
     });
-
-    console.log("zxvzxvzxvczv");
 
     if (Array.isArray(data)) {
       throw new Error(`Expected file but got directory at ${filePath}`);
@@ -158,8 +151,6 @@ const destroy = async ({
   message: string;
   sha: string;
 }): Promise<{ path: string; sha: string }> => {
-  console.log("AAAAAAA");
-  console.log(filePath);
   const res = await githubClient.rest.repos.deleteFile({
     owner,
     repo,
