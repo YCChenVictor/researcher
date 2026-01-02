@@ -25,7 +25,7 @@ const upsert = async (filePath: string, content: string) => {
 };
 
 const get = async (filePath: string): Promise<string | null> => {
-  const file = await getFromGithub(`articles/${filePath}`);
+  const file = await getFromGithub(`articles/${filePath}.md`);
   if (!file) return null;
 
   return file.content ?? "";
@@ -34,10 +34,14 @@ const get = async (filePath: string): Promise<string | null> => {
 const destroy = async (
   filePath: string,
 ): Promise<{ path: string; sha: string } | null> => {
-  const fullPath = `articles/${filePath}`;
+  const fullPath = `articles/${filePath}.md`;
+
+  console.log("xzcvxcvvxzczxv");
 
   const file = await getFromGithub(fullPath);
   if (!file?.sha) return null;
+
+  console.log("xzcvxcvvxzczxv");
 
   return destroyInGithub({
     filePath: fullPath,

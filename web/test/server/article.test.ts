@@ -69,7 +69,7 @@ describe("get", () => {
   it("returns null when file not found", async () => {
     getFileSpy.mockResolvedValueOnce(asGetFileRet(null));
 
-    await expect(get("a.md")).resolves.toBeNull();
+    await expect(get("a")).resolves.toBeNull();
     expect(getFileSpy).toHaveBeenCalledWith("articles/a.md");
   });
 

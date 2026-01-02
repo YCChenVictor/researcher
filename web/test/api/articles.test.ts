@@ -65,12 +65,14 @@ describe("handlePutArticle", () => {
 describe("handleDeleteArticle", () => {
   it("returns 200 + ok=true on success", async () => {
     vi.mocked(destroy).mockResolvedValueOnce({
-      path: "articles/a.md",
+      path: "articles/a",
       sha: "123",
     });
 
-    const req = new NextRequest("http://localhost:3000/api/articles?key=a.md", {
+    const req = new NextRequest("http://localhost:3000/api/articles", {
       method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ path: "articles/a.md" }),
     });
 
     const res = await handleDeleteArticle(req);
@@ -78,9 +80,9 @@ describe("handleDeleteArticle", () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({
       ok: true,
-      deleted: { path: "articles/a.md", sha: "123" },
+      deleted: { path: "articles/a", sha: "123" },
     });
 
-    expect(destroy).toHaveBeenCalledWith("a.md");
+    expect(destroy).toHaveBeenCalledWith("a"); // because you strip `.md`
   });
 });

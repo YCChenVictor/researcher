@@ -3,8 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { Node } from "../types/graph";
 
 import { decompose, redirect } from "./client/graph";
-// import { destroy as destroyLink } from "./client/graph/link";
-import { create, get as getArticle } from "./client/article";
+import {
+  create,
+  get as getArticle,
+  destroy as destroyArticle,
+} from "./client/article";
 
 export type MenuActionId =
   | "decompose"
@@ -51,7 +54,9 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
     (async () => {
       try {
-        const article = await getArticle(node.key);
+        console.log("xzcvxzvc");
+        console.log(node.key);
+        const article = await getArticle(`${node.key}`);
         if (!alive) return;
         setHasArticle(article != null);
       } catch {
@@ -106,7 +111,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const handleClick = async (action: MenuActionId) => {
     switch (action) {
       case "destroy":
-        await removeNode(node);
+        await Promise.allSettled([removeNode(node), destroyArticle(node.key)]);
         closeMenu();
         return;
       case "close":

@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import {
   articleBody,
-  deleteQuerySchema,
+  deleteBodySchema,
   getQuerySchema,
 } from "../../schemas/articles";
 import { upsert, get, destroy } from "../../server/article";
@@ -86,33 +86,28 @@ const handlePutArticle = async (req: NextRequest) => {
   }
 };
 
-const handleDeleteArticle = async (
-  req: NextRequest,
-  deps: { destroy: (key: string) => Promise<{ path: string } | null> } = {
-    destroy,
-  },
-) => {
+const handleDeleteArticle = async (req: NextRequest) => {
   try {
-    const url = new URL(req.url);
-    const { key } = deleteQuerySchema.parse({
-      key: url.searchParams.get("key"),
-    });
+    const body = await req.json();
+    const { path } = deleteBodySchema.parse(body);
 
-    const result = await deps.destroy(key);
-    if (!result) {
+    const key = path.replace(/^\/?articles\//, "").replace(/\.md$/, "");
+
+    const result = await destroy(key);
+
+    if (!result)
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
-    }
 
     return NextResponse.json({ ok: true, deleted: result }, { status: 200 });
-    // or: return new NextResponse(null, { status: 204 });
   } catch (err) {
+    console.log("zxcvxzcv");
+    console.log(err);
     if (err instanceof ZodError) {
       return NextResponse.json(
-        { error: "Invalid query", issues: err.issues },
+        { error: "Invalid body", issues: err.issues },
         { status: 400 },
       );
     }
-
     console.error(err);
     return NextResponse.json(
       { error: "Internal server error" },
