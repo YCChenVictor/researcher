@@ -72,7 +72,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         action: "decompose",
         hint: "Ask AI to generate child topics and link them under this node.",
       },
-      { label: "Close", action: "close", hint: "Dismiss this menu." },
       {
         label: "Destroy",
         action: "destroy",
@@ -143,15 +142,30 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         className="mx-auto mt-24 w-[min(520px,calc(100%-2rem))] rounded-xl border bg-slate-50 text-slate-900 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-4 py-3 border-b">
+        <div className="px-4 py-3 border-b relative">
           <div className="text-sm font-medium">Actions</div>
-          <div className="text-xs text-slate-500 break-all">{node.key}</div>
+          <div className="text-xs text-slate-500 break-all pr-10">
+            {node.key}
+          </div>
+
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded hover:bg-slate-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeMenu();
+            }}
+          >
+            ×
+          </button>
         </div>
 
         <div className="p-2">
           {options.map((opt) => (
             <button
               key={opt.action}
+              type="button"
               className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 disabled:opacity-60"
               onClick={() => void handleClick(opt.action)}
               disabled={hasArticle === null && opt.action !== "close"}
