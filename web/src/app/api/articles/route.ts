@@ -100,15 +100,12 @@ const handleDeleteArticle = async (req: NextRequest) => {
 
     return NextResponse.json({ ok: true, deleted: result }, { status: 200 });
   } catch (err) {
-    console.log("zxcvxzcv");
-    console.log(err);
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Invalid body", issues: err.issues },
         { status: 400 },
       );
     }
-    console.error(err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

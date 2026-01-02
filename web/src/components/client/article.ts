@@ -23,9 +23,6 @@ const create = async (node: Node) => {
     });
 
     if (!res.ok) throw new Error(`Init article failed: ${res.status}`);
-
-    const data = await res.json();
-    console.log("Article created", data.file);
   } catch (err) {
     console.error("Init article error", err);
   }
@@ -79,9 +76,6 @@ const update = async (args: {
 
 const destroy = async (key: string): Promise<{ path: string }> => {
   const path = `articles/${key}`;
-
-  console.log("zxcvxzcvzxv");
-  console.log(path);
 
   const res = await fetch("/api/articles", {
     method: "DELETE",
