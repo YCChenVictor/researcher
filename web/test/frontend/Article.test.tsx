@@ -27,7 +27,9 @@ describe("Article", () => {
 
     render(<Article filePath="content/articles/a.md" />);
 
-    expect(await screen.findByText("Intro")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Intro", level: 2 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Hello")).toBeInTheDocument();
   });
 });
