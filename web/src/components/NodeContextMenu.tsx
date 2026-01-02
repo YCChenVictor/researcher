@@ -72,11 +72,11 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   const options = useMemo<MenuOption[]>(() => {
     const base: MenuOption[] = [
-      {
-        label: "Decompose",
-        action: "decompose",
-        hint: "Ask AI to generate child topics and link them under this node.",
-      },
+      // {
+      //   label: "Decompose",
+      //   action: "decompose",
+      //   hint: "Ask AI to generate child topics and link them under this node.",
+      // },
       {
         label: "Destroy",
         action: "destroy",
@@ -140,45 +140,107 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-md"
       onClick={closeMenu}
+      role="dialog"
+      aria-modal="true"
     >
       <div
-        className="mx-auto mt-24 w-[min(520px,calc(100%-2rem))] rounded-xl border bg-slate-50 text-slate-900 shadow-lg"
+        className="mt-20 w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/90 text-zinc-100 shadow-2xl ring-1 ring-white/10"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-4 py-3 border-b relative">
-          <div className="text-sm font-medium">Actions</div>
-          <div className="text-xs text-slate-500 break-all pr-10">
-            {node.key}
-          </div>
-
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded hover:bg-slate-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeMenu();
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="p-2">
-          {options.map((opt) => (
+        <div className="relative px-5 py-4 border-b border-white/10">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold tracking-tight">
+                Actions
+              </div>
+              <div className="mt-1 text-xs text-zinc-400 break-all">
+                {node.key}
+              </div>
+            </div>
             <button
-              key={opt.action}
               type="button"
-              className="w-full text-left px-3 py-2 rounded hover:bg-slate-100 disabled:opacity-60"
-              onClick={() => void handleClick(opt.action)}
-              disabled={hasArticle === null && opt.action !== "close"}
+              aria-label="Close"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full
+                       text-zinc-300 hover:text-zinc-100 hover:bg-white/10
+                       focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeMenu();
+              }}
             >
-              <div className="text-sm font-medium">{opt.label}</div>
-              <div className="text-xs text-slate-600">{opt.hint}</div>
+              <span className="text-xl leading-none">×</span>
             </button>
-          ))}
+          </div>
+        </div>
+        <div className="p-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* Left: Init / View / Edit / Destroy */}
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+              <div className="px-4 py-2.5 border-b border-white/10">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  Manage
+                </div>
+              </div>
+
+              <div className="p-1">
+                {options.map((opt) => {
+                  if (!["init", "view", "edit", "destroy"].includes(opt.action))
+                    return null;
+
+                  return (
+                    <button
+                      key={opt.action}
+                      type="button"
+                      className="group w-full text-left rounded-xl px-4 py-3
+                         border border-transparent hover:border-white/10 hover:bg-white/5
+                         focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                         disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                      onClick={() => void handleClick(opt.action)}
+                      disabled={hasArticle === null}
+                    >
+                      <div className="text-sm font-medium text-zinc-100">
+                        {opt.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-zinc-400">
+                        {opt.hint}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right: Decompose */}
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+              <div className="px-4 py-2.5 border-b border-white/10">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  Decompose
+                </div>
+              </div>
+
+              <div className="p-1">
+                <button
+                  type="button"
+                  className="group w-full text-left rounded-xl px-4 py-3
+                     border border-transparent hover:border-white/10 hover:bg-white/5
+                     focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                     disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                  onClick={() => void handleClick("decompose")}
+                  disabled={hasArticle === null}
+                >
+                  <div className="text-sm font-medium text-zinc-100">
+                    Decompose
+                  </div>
+                  <div className="mt-0.5 text-xs text-zinc-400">
+                    Ask AI to generate child topics and link them under this
+                    node.
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
