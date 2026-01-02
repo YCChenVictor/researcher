@@ -34,7 +34,7 @@ const create = async (node: Node) => {
 const get = async (
   key: string,
 ): Promise<{ path: string; content: string } | null> => {
-  const res = await fetch(`/api/articles?key=${encodeURIComponent(key)}.md`);
+  const res = await fetch(`/api/articles?key=${encodeURIComponent(key)}`);
 
   if (res.status === 404) {
     return null;
@@ -78,8 +78,10 @@ const update = async (args: {
 };
 
 const destroy = async (key: string): Promise<{ path: string }> => {
-  const mdKey = key.endsWith(".md") ? key : `${key}.md`;
-  const path = `articles/${mdKey}`;
+  const path = `articles/${key}`;
+
+  console.log("zxcvxzcvzxv");
+  console.log(path);
 
   const res = await fetch("/api/articles", {
     method: "DELETE",
