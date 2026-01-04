@@ -7,27 +7,30 @@ import {
   setupSvg,
   createSimulation,
   createDrag,
-  removeNode,
   createNodeInteractions,
   updateLinks,
+  removeNode,
   updateNodes,
   connectChildren,
   setSelectedSource,
   onTick,
   addNodeAt,
+  removeLink,
 } from "./client/graph";
-import type { Node, Link, Runtime } from "../types/graph";
+import type { Node, Link, Runtime, Menu } from "../types/graph";
 import NodeContextMenu from "./NodeContextMenu";
+import LinkContextMenu from "./LinkContextMenu";
 
 type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
 
 export const ForceGraph: React.FC = () => {
-  const [menu, setMenu] = useState<{ node: Node } | null>(null);
+  const [menu, setMenu] = useState<Menu>(null);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
   const removeNodeRef = useRef<((n: Node) => void) | null>(null);
+  const removeLinkRef = useRef<((l: Link) => Promise<void>) | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -84,6 +87,7 @@ export const ForceGraph: React.FC = () => {
         connectChildren(rt, parent, titles, interactions);
 
       removeNodeRef.current = (n) => removeNode(rt, n, interactions);
+      removeLinkRef.current = (l) => removeLink(rt, l, interactions);
 
       svg.on("click", (event: MouseEvent) => {
         const target = event.target as HTMLElement;
@@ -120,7 +124,7 @@ export const ForceGraph: React.FC = () => {
         className="w-full h-full"
       />
 
-      {menu && (
+      {menu?.kind === "node" && (
         <NodeContextMenu
           node={menu.node}
           closeMenu={() => setMenu(null)}
@@ -129,6 +133,20 @@ export const ForceGraph: React.FC = () => {
           }
           removeNode={async (n) => {
             await removeNodeRef.current?.(n);
+            setMenu(null);
+          }}
+        />
+      )}
+
+      {menu?.kind === "link" && (
+        <LinkContextMenu
+          link={menu.link}
+          x={menu.x}
+          y={menu.y}
+          closeMenu={() => setMenu(null)}
+          removeLink={async (l) => {
+            await removeLinkRef.current?.(l);
+            setMenu(null);
           }}
         />
       )}
