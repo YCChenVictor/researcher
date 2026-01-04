@@ -3,6 +3,11 @@ import type { Simulation } from "d3-force";
 import type { DragBehavior, SubjectPosition } from "d3-drag";
 import type { Selection } from "d3-selection";
 
+export type Menu =
+  | { kind: "node"; node: Node }
+  | { kind: "link"; link: Link; x: number; y: number }
+  | null;
+
 export interface Node extends SimulationNodeDatum {
   key: string;
   name: string;
@@ -46,7 +51,7 @@ export type Runtime = {
   selectedSource: Node | null;
 
   persist: (nodes: Node[], links: Link[]) => void;
-  setMenu: (menu: { node: Node } | null) => void;
+  setMenu: (menu: Menu) => void;
 };
 
 export type Deps = {

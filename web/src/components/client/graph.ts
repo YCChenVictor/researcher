@@ -178,16 +178,70 @@ const setupSvg = (
   return { svg, zoomG, linkGroup, nodeGroup, labelGroup };
 };
 
+const linkKey = (d: Link) => {
+  const a = endKey(d.source);
+  const b = endKey(d.target);
+  return a < b ? `${a}—${b}` : `${b}—${a}`;
+};
+
+type End = Link["source"] | Link["target"];
+
+const isNodeObj = (v: End): v is Node => typeof v === "object" && v !== null;
+
 const renderLinks = (
   linkGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
   links: Link[],
-) =>
-  linkGroup
-    .selectAll<SVGLineElement, Link>("line")
-    .data(links)
-    .join("line")
-    .attr("stroke", "#999")
-    .attr("marker-end", "url(#arrow)");
+  rt: Runtime,
+): d3.Selection<SVGLineElement, Link, SVGGElement, unknown> => {
+  const byKey = new Map(rt.nodes.map((n: Node) => [String(n.key), n]));
+
+  const pos = (e: End) => {
+    if (isNodeObj(e)) return { x: e.x ?? 0, y: e.y ?? 0 };
+    const n = byKey.get(String(e));
+    return { x: n?.x ?? 0, y: n?.y ?? 0 };
+  };
+
+  const pairs = linkGroup
+    .selectAll<SVGGElement, Link>("g.link-pair")
+    .data(links, linkKey)
+    .join((enter) => {
+      const g = enter.append("g").attr("class", "link-pair");
+
+      g.append("line")
+        .attr("class", "link-hit")
+        .style("stroke", "#999")
+        .style("stroke-width", 24)
+        .style("pointer-events", "stroke")
+        .style("cursor", "context-menu")
+        .on("contextmenu", (event, d) => {
+          event.preventDefault();
+          event.stopPropagation();
+          rt.setMenu({
+            kind: "link",
+            link: d,
+            x: event.clientX,
+            y: event.clientY,
+          });
+        });
+
+      g.append("line")
+        .attr("class", "link")
+        .attr("marker-end", "url(#arrow)")
+        .style("pointer-events", "none");
+
+      return g;
+    });
+
+  const lineSel = pairs.selectAll<SVGLineElement, Link>("line");
+
+  lineSel
+    .attr("x1", (d) => pos(d.source).x)
+    .attr("y1", (d) => pos(d.source).y)
+    .attr("x2", (d) => pos(d.target).x)
+    .attr("y2", (d) => pos(d.target).y);
+
+  return lineSel;
+};
 
 const createSimulation = (
   nodes: Node[],
@@ -277,7 +331,7 @@ const createNodeInteractions = (rt: Runtime) => {
   const onContextMenu = (event: MouseEvent, d: Node) => {
     event.preventDefault();
     event.stopPropagation();
-    rt.setMenu({ node: d });
+    rt.setMenu({ kind: "node", node: d });
   };
 
   return { onClick, onContextMenu };
@@ -292,10 +346,6 @@ const bindLinkForce = (
   linkForce.links(links);
 };
 
-const updateLinks = (rt: Runtime) => {
-  rt.linkSel = renderLinks(rt.linkGroup, rt.links);
-};
-
 const addLink = (rt: Runtime, sourceNode: Node, targetNode: Node) => {
   rt.links = [...rt.links, { source: sourceNode.key, target: targetNode.key }];
 
@@ -304,6 +354,34 @@ const addLink = (rt: Runtime, sourceNode: Node, targetNode: Node) => {
   rt.simulation.alpha(1).restart();
 
   rt.persist(rt.nodes, rt.links);
+};
+
+const updateLinks = (rt: Runtime) => {
+  rt.linkSel = renderLinks(rt.linkGroup, rt.links, rt);
+};
+
+const removeLink = async (
+  rt: Runtime,
+  toRemove: Link,
+  handlers: ReturnType<typeof createNodeInteractions>,
+) => {
+  const s = endKey(toRemove.source);
+  const t = endKey(toRemove.target);
+
+  rt.links = rt.links.filter(
+    (l) => !(endKey(l.source) === s && endKey(l.target) === t),
+  );
+
+  bindLinkForce(rt.simulation, rt.links);
+
+  updateLinks(rt);
+  updateNodes(rt, handlers);
+
+  rt.simulation.alpha(1).restart();
+
+  await persistGraph(rt.nodes, rt.links);
+
+  rt.setMenu(null);
 };
 
 const updateNodes = (
@@ -458,6 +536,7 @@ export {
   renderLinks,
   positionLinksOnTick,
   removeNode,
+  removeLink,
   connectChildren,
   createNodeInteractions,
   updateLinks,
