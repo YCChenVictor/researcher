@@ -70,11 +70,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
   const options = useMemo<MenuOption[]>(() => {
     const base: MenuOption[] = [
-      // {
-      //   label: "Decompose",
-      //   action: "decompose",
-      //   hint: "Ask AI to generate child topics and link them under this node.",
-      // },
       {
         label: "Destroy",
         action: "destroy",
@@ -128,7 +123,13 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       case "decompose":
         try {
           const titles = await decompose(node);
-          connectChildren(node, titles);
+          // Will truly enable it after enough budget
+          if (process.env.NODE_ENV === "development") {
+            // eslint-disable-next-line no-console
+            console.log(titles);
+          } else {
+            connectChildren(node, titles);
+          }
         } finally {
           closeMenu();
         }
@@ -210,7 +211,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
               </div>
             </div>
 
-            {/* Right: Decompose */}
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
               <div className="px-4 py-2.5 border-b border-white/10">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">

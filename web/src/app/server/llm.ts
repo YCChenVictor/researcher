@@ -1,15 +1,11 @@
-import { OpenAI } from "openai";
-
-if (!process.env.OPENAI_API_KEY) {
-  throw "No OPENAI_API_KEY in env";
-}
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import OpenAI from "openai";
 
 const call = async (
   messages: { role: "system" | "user" | "assistant"; content: string }[],
 ) => {
-  const res = await openai.chat.completions.create({
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+  const res = await client.chat.completions.create({
     model: "gpt-4",
     messages,
     temperature: 0.7,
@@ -19,24 +15,30 @@ const call = async (
 };
 
 const buildMessage = async ({
-  professional,
+  reasoningRoute,
   numberOfSubTopic,
-  topic,
 }: {
+  reasoningRoute: string[];
   numberOfSubTopic: number;
-  professional: string;
-  topic: string;
 }): Promise<{ role: "system" | "user" | "assistant"; content: string }[]> => {
+  const topic = reasoningRoute[0];
+
   return [
     {
       role: "system",
       content: `
-      You are ${professional}.
-Given one broad research topic, you break it into more specific research topics.
+You are a cross-disciplinary analyst.
+
+Rules:
+- Titles only (no explanations).
+- Exactly ${numberOfSubTopic} items.
+- Title length: no more than 6 words.
+- Keep consistency with the provided reasoning route (do not introduce unrelated themes).
+
 Return ONLY valid JSON:
 {
   "topics": [
-    { "title": "string" }
+    topic1, topic2, ...
   ]
 }
     `.trim(),
@@ -44,8 +46,10 @@ Return ONLY valid JSON:
     {
       role: "user",
       content: `
-Decompose this research topic into exactly ${numberOfSubTopic} research topics:
-"${topic}"
+Decompose the question “'${topic}'”. This topic was derived from reasoning: ${reasoningRoute
+        .reverse()
+        .map((t, i) => `'${t}'${i === reasoningRoute.length - 1 ? "" : " -> "}`)
+        .join("")}
     `.trim(),
     },
   ];

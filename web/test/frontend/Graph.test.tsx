@@ -1,7 +1,7 @@
 import { it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent, within, waitFor } from "@testing-library/react";
 
-import { Node, Link } from "../../src/types/graph";
+import { Node, LinkSim } from "../../src/types/graph";
 import * as graphFeatures from "../../src/components/client/graph";
 import ForceGraph from "../../src/components/Graph";
 
@@ -16,7 +16,12 @@ vi.mock("../../src/components/client/graph/graph", async (importOriginal) => {
 
   return {
     ...actual,
-    createSimulation: (nodes: Node[], links: Link[], w: number, h: number) => {
+    createSimulation: (
+      nodes: Node[],
+      links: LinkSim[],
+      w: number,
+      h: number,
+    ) => {
       const sim = actual.createSimulation(nodes, links, w, h);
       hooks.stopSpy = vi.spyOn(sim, "stop");
       return sim;
@@ -161,7 +166,7 @@ it("uses connectChildren when clicking Decompose", async () => {
 
   // baseline persist right BEFORE decompose (if any)
   const lastBeforeDecompose = persistSpy.mock.calls.at(-1) as
-    | [Node[], Link[]]
+    | [Node[], LinkSim[]]
     | undefined;
   const [nodesBefore, linksBefore] = lastBeforeDecompose ?? [[], []];
 
@@ -185,7 +190,7 @@ it("uses connectChildren when clicking Decompose", async () => {
 
   const [nodesArg, linksArg] = persistSpy.mock.calls.at(-1)! as [
     Node[],
-    Link[],
+    LinkSim[],
   ];
   expect(nodesArg.length).toBe(nodesBefore.length + 2); // decompose adds 2 children
   expect(linksArg.length).toBe(linksBefore.length + 2); // adds 2 links

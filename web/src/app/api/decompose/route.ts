@@ -3,49 +3,53 @@ import { ZodError } from "zod";
 
 import { decomposeBody } from "../../schemas/decompose";
 import { buildMessage, call } from "../../server/llm";
+import { get as getGraph } from "../../server/graph";
+import { endToStart, idsToTitles } from "../../../components/client/graph";
 
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
-    const { topic, numberOfSubTopic } = decomposeBody.parse(json);
+    const { startId, endId, numberOfSubTopic } = decomposeBody.parse(json);
+
+    const graph = await getGraph();
+
+    const path = endToStart(graph.links, endId, startId);
+    const reasoningRoute = idsToTitles(graph.nodes, path);
 
     let answer;
     if (process.env.NODE_ENV === "development") {
+      const messages = await buildMessage({
+        reasoningRoute,
+        numberOfSubTopic: numberOfSubTopic ?? 3,
+      });
+      // Will truly enable it after enough budget
+      // eslint-disable-next-line no-console
+      console.log(messages);
       answer = {
         topics: [
           {
-            title:
-              "Architecting a digital payments infrastructure for UBI delivery using New Zealand’s existing tax collection systems",
+            title: "test, you should use ChatGPT",
           },
           {
-            title:
-              "Integrating national ID and authentication systems to securely identify and enroll UBI recipients in New Zealand",
+            title: "test, you should use ChatGPT",
           },
           {
-            title:
-              "Evaluating administrative efficiency and cost-effectiveness of UBI delivery via existing tax and ID infrastructure in New Zealand",
-          },
-          {
-            title:
-              "Assessing equity, inclusion, and error risks (exclusion, duplication, fraud) in a UBI system built on current tax and ID databases",
-          },
-          {
-            title:
-              "Designing governance, data protection, and interoperability standards for New Zealand’s UBI digital infrastructure",
+            title: "test, you should use ChatGPT",
           },
         ],
       };
     } else {
       const messages = await buildMessage({
-        professional: "economist",
-        numberOfSubTopic: numberOfSubTopic ?? 5,
-        topic,
+        reasoningRoute,
+        numberOfSubTopic: numberOfSubTopic ?? 3,
       });
       answer = await call(messages);
     }
 
     return NextResponse.json({ answer }, { status: 200 });
   } catch (err) {
+    console.error(err);
+
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Invalid body", issues: err.issues },
@@ -53,7 +57,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.error(err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

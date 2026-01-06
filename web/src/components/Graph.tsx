@@ -17,7 +17,7 @@ import {
   addNodeAt,
   removeLink,
 } from "./client/graph";
-import type { Node, Link, Runtime, Menu } from "../types/graph";
+import type { Node, LinkSim, Runtime, Menu } from "../types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 import LinkContextMenu from "./LinkContextMenu";
 
@@ -30,11 +30,11 @@ export const ForceGraph: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
   const removeNodeRef = useRef<((n: Node) => void) | null>(null);
-  const removeLinkRef = useRef<((l: Link) => Promise<void>) | null>(null);
+  const removeLinkRef = useRef<((l: LinkSim) => Promise<void>) | null>(null);
 
   useEffect(() => {
     let alive = true;
-    let simulation: d3.Simulation<Node, Link> | null = null;
+    let simulation: d3.Simulation<Node, LinkSim> | null = null;
 
     const run = async () => {
       const svgEl = svgRef.current;
