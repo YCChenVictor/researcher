@@ -19,24 +19,29 @@ const call = async (
 };
 
 const buildMessage = async ({
-  professional,
   numberOfSubTopic,
   topic,
 }: {
   numberOfSubTopic: number;
-  professional: string;
   topic: string;
 }): Promise<{ role: "system" | "user" | "assistant"; content: string }[]> => {
   return [
     {
       role: "system",
       content: `
-      You are ${professional}.
-Given one broad research topic, you break it into more specific research topics.
+You are a cross-disciplinary analyst.
+
+Rules:
+- Titles must be self-contained and clearly about ${topic} adoption barriers.
+- Cover different angles.
+- Titles only (no explanations).
+- Exactly ${numberOfSubTopic} items.
+- Title length: no more than 6 words.
+
 Return ONLY valid JSON:
 {
   "topics": [
-    { "title": "string" }
+    topic1, topic2, ...
   ]
 }
     `.trim(),
@@ -44,8 +49,7 @@ Return ONLY valid JSON:
     {
       role: "user",
       content: `
-Decompose this research topic into exactly ${numberOfSubTopic} research topics:
-"${topic}"
+Decompose the question “${topic}” into exactly ${numberOfSubTopic} high-level explanatory aspects that together answer it.
     `.trim(),
     },
   ];

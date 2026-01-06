@@ -115,7 +115,7 @@ const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   const res = await fetch("/api/decompose", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 5 }),
+    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 3 }),
   });
 
   if (!res.ok) throw new Error(`Decompose failed: ${res.status}`);
