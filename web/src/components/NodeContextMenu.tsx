@@ -210,7 +210,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
               </div>
             </div>
 
-            {/* Right: Decompose */}
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
               <div className="px-4 py-2.5 border-b border-white/10">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
@@ -230,6 +229,23 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 >
                   <div className="text-sm font-medium text-zinc-100">
                     Decompose
+                  </div>
+                  <div className="mt-0.5 text-xs text-zinc-400">
+                    Ask AI to generate child topics and link them under this
+                    node.
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="group w-full text-left rounded-xl px-4 py-3
+                     border border-transparent hover:border-white/10 hover:bg-white/5
+                     focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                     disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                  onClick={() => void handleClick("decompose")}
+                  disabled={hasArticle === null}
+                >
+                  <div className="text-sm font-medium text-zinc-100">
+                    Purpose App
                   </div>
                   <div className="mt-0.5 text-xs text-zinc-400">
                     Ask AI to generate child topics and link them under this
