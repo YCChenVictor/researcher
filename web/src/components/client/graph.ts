@@ -210,7 +210,7 @@ const renderLinks = (
       g.append("line")
         .attr("class", "link-hit")
         .style("stroke", "#999")
-        .style("stroke-width", 24)
+        .style("stroke-width", 4)
         .style("pointer-events", "stroke")
         .style("cursor", "context-menu")
         .on("contextmenu", (event, d) => {
