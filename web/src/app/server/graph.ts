@@ -2,19 +2,20 @@ import { Octokit } from "octokit";
 
 import { get as getFromGithub } from "./github";
 import { GITHUB_BRANCH, GITHUB_OWNER, GITHUB_REPO } from "./env.server";
+import type { Node, LinkJson } from "../../types/graph";
 
 const token = process.env.GITHUB_TOKEN;
 
 export const githubClient = new Octokit({ auth: token });
 
 export type GraphPayload = {
-  nodes: unknown[];
-  links: unknown[];
+  nodes: Node[];
+  links: LinkJson[];
 };
 
 const GRAPH_PATH = "graph.json";
 
-async function get(): Promise<GraphPayload> {
+const get = async (): Promise<GraphPayload> => {
   try {
     const file = await getFromGithub(GRAPH_PATH);
 
@@ -29,7 +30,7 @@ async function get(): Promise<GraphPayload> {
     console.error("Failed to load graph from GitHub", err);
     return { nodes: [], links: [] };
   }
-}
+};
 
 async function upsert(graph: unknown) {
   const content = Buffer.from(JSON.stringify(graph, null, 2)).toString(

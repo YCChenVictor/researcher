@@ -1,11 +1,11 @@
-import type { Link } from "../types/graph";
+import type { LinkSim } from "../types/graph";
 
 export default function LinkContextMenu(props: {
-  link: Link;
+  link: LinkSim;
   x: number;
   y: number;
   closeMenu: () => void;
-  removeLink: (l: Link) => Promise<void> | void;
+  removeLink: (l: LinkSim) => Promise<void> | void;
 }) {
   const { x, y, link, closeMenu, removeLink } = props;
 

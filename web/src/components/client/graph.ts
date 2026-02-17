@@ -1,6 +1,13 @@
 import * as d3 from "d3";
 
-import type { Node, Link, Runtime, GraphLayers, Deps } from "../../types/graph";
+import type {
+  Node,
+  LinkSim,
+  Runtime,
+  GraphLayers,
+  Deps,
+  LinkJson,
+} from "../../types/graph";
 
 export type NodeClickDeps = {
   setSelectedSource: (node: Node | null) => void;
@@ -14,8 +21,7 @@ export type ShowContextMenuDeps = {
   log?: (msg: string, node: Node) => void;
 };
 
-// Graph data
-const persistGraph = async (nodes: Node[], links: Link[]) => {
+const persistGraph = async (nodes: Node[], links: LinkSim[]) => {
   const graph = {
     nodes: serializeNodes(nodes),
     links: serializeLinks(links),
@@ -65,7 +71,7 @@ const handleNodeClickLogic = (
   setSelectedSource(null);
 };
 
-const fetchGraph = async (): Promise<{ nodes: Node[]; links: Link[] }> => {
+const fetchGraph = async (): Promise<{ nodes: Node[]; links: LinkSim[] }> => {
   const res = await fetch("/api/graph");
   if (!res.ok) throw new Error(`Failed to load graph: ${res.status}`);
 
@@ -83,11 +89,12 @@ const fetchGraph = async (): Promise<{ nodes: Node[]; links: Link[] }> => {
     links: graph.links.map((l) => ({ source: l.source, target: l.target })),
   };
 };
+
 const buildChildren = (
   parent: Node,
   titles: string[],
   radius = 80,
-): { newNodes: Node[]; newLinks: Link[] } => {
+): { newNodes: Node[]; newLinks: LinkSim[] } => {
   const newNodes: Node[] = titles.map((title, i) => {
     const angle = (2 * Math.PI * i) / titles.length;
     const key = crypto.randomUUID();
@@ -103,7 +110,7 @@ const buildChildren = (
     };
   });
 
-  const newLinks: Link[] = newNodes.map((child) => ({
+  const newLinks: LinkSim[] = newNodes.map((child) => ({
     source: parent.key,
     target: child.key,
   }));
@@ -115,7 +122,7 @@ const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   const res = await fetch("/api/decompose", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 5 }),
+    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 3 }),
   });
 
   if (!res.ok) throw new Error(`Decompose failed: ${res.status}`);
@@ -126,7 +133,7 @@ const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   return json.answer.topics.map((t) => t.title);
 };
 
-const serializeLinks = (links: Link[]) =>
+const serializeLinks = (links: LinkSim[]) =>
   links.map((l) => ({
     source: typeof l.source === "string" ? l.source : l.source.key,
     target: typeof l.target === "string" ? l.target : l.target.key,
@@ -178,21 +185,28 @@ const setupSvg = (
   return { svg, zoomG, linkGroup, nodeGroup, labelGroup };
 };
 
-const linkKey = (d: Link) => {
+const linkKey = (d: LinkSim) => {
   const a = endKey(d.source);
   const b = endKey(d.target);
   return a < b ? `${a}—${b}` : `${b}—${a}`;
 };
 
-type End = Link["source"] | Link["target"];
+const getId = (e: string | Node) => (typeof e === "string" ? e : e.key);
+
+type End = LinkSim["source"] | LinkSim["target"];
 
 const isNodeObj = (v: End): v is Node => typeof v === "object" && v !== null;
 
+const toLinkJson = (l: LinkSim): LinkJson => ({
+  source: getId(l.source),
+  target: getId(l.target),
+});
+
 const renderLinks = (
   linkGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
-  links: Link[],
+  links: LinkSim[],
   rt: Runtime,
-): d3.Selection<SVGLineElement, Link, SVGGElement, unknown> => {
+): d3.Selection<SVGLineElement, LinkSim, SVGGElement, unknown> => {
   const byKey = new Map(rt.nodes.map((n: Node) => [String(n.key), n]));
 
   const pos = (e: End) => {
@@ -202,7 +216,7 @@ const renderLinks = (
   };
 
   const pairs = linkGroup
-    .selectAll<SVGGElement, Link>("g.link-pair")
+    .selectAll<SVGGElement, LinkSim>("g.link-pair")
     .data(links, linkKey)
     .join((enter) => {
       const g = enter.append("g").attr("class", "link-pair");
@@ -218,7 +232,7 @@ const renderLinks = (
           event.stopPropagation();
           rt.setMenu({
             kind: "link",
-            link: d,
+            link: toLinkJson(d),
             x: event.clientX,
             y: event.clientY,
           });
@@ -232,7 +246,7 @@ const renderLinks = (
       return g;
     });
 
-  const lineSel = pairs.selectAll<SVGLineElement, Link>("line");
+  const lineSel = pairs.selectAll<SVGLineElement, LinkSim>("line");
 
   lineSel
     .attr("x1", (d) => pos(d.source).x)
@@ -245,7 +259,7 @@ const renderLinks = (
 
 const createSimulation = (
   nodes: Node[],
-  links: Link[],
+  links: LinkSim[],
   width: number,
   height: number,
 ) =>
@@ -254,7 +268,7 @@ const createSimulation = (
     .force(
       "link",
       d3
-        .forceLink<Node, Link>(links)
+        .forceLink<Node, LinkSim>(links)
         .id((d) => d.key)
         .distance(80),
     )
@@ -281,7 +295,7 @@ const createDrag = (simulation: d3.Simulation<Node, undefined>) =>
     });
 
 const positionLinksOnTick = (
-  linkSelection: d3.Selection<SVGLineElement, Link, SVGGElement, unknown>,
+  linkSelection: d3.Selection<SVGLineElement, LinkSim, SVGGElement, unknown>,
 ) => {
   linkSelection
     .attr("x1", (d) =>
@@ -306,7 +320,7 @@ const positionLinksOnTick = (
     );
 };
 
-const endKey = (end: Link["source"] | Link["target"]) =>
+const endKey = (end: LinkSim["source"] | LinkSim["target"]) =>
   typeof end === "string" ? end : end.key;
 
 const updateNodeHighlight = (rt: Runtime) => {
@@ -338,10 +352,10 @@ const createNodeInteractions = (rt: Runtime) => {
 };
 
 const bindLinkForce = (
-  simulation: d3.Simulation<Node, Link>,
-  links: Link[],
+  simulation: d3.Simulation<Node, LinkSim>,
+  links: LinkSim[],
 ) => {
-  const linkForce = simulation.force("link") as d3.ForceLink<Node, Link>;
+  const linkForce = simulation.force("link") as d3.ForceLink<Node, LinkSim>;
   linkForce.id((d) => d.key);
   linkForce.links(links);
 };
@@ -362,7 +376,7 @@ const updateLinks = (rt: Runtime) => {
 
 const removeLink = async (
   rt: Runtime,
-  toRemove: Link,
+  toRemove: LinkSim,
   handlers: ReturnType<typeof createNodeInteractions>,
 ) => {
   const s = endKey(toRemove.source);
@@ -420,6 +434,11 @@ const updateNodes = (
     );
 
   updateNodeHighlight(rt);
+};
+
+const idsToTitles = (nodes: Node[], path: string[]) => {
+  const byId = new Map(nodes.map((n) => [n.key, n.name] as const));
+  return path.map((id) => byId.get(id) ?? id);
 };
 
 const removeNode = async (
@@ -523,7 +542,36 @@ const addNodeAt = (
 
 const redirect = (url: string) => window.location.assign(url);
 
+const endToStart = (
+  links: LinkJson[],
+  endId: string,
+  startId: string,
+): string[] => {
+  const parentOf = new Map<string, string>();
+
+  for (const { source, target } of links) {
+    if (parentOf.has(target) && parentOf.get(target) !== source) {
+      throw new Error(`Not a tree: ${target} has multiple parents`);
+    }
+    parentOf.set(target, source);
+  }
+
+  const path: string[] = [];
+  let cur: string | undefined = endId;
+  const seen = new Set<string>();
+
+  while (cur && !seen.has(cur)) {
+    seen.add(cur);
+    path.push(cur);
+    if (cur === startId) return path;
+    cur = parentOf.get(cur);
+  }
+
+  return path;
+};
+
 export {
+  endToStart,
   addNodeAt,
   createSimulation,
   createDrag,
@@ -545,4 +593,5 @@ export {
   onTick,
   redirect,
   endKey,
+  idsToTitles,
 };

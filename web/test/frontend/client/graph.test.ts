@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 
-import { Runtime, Link, Node } from "../../../src/types/graph";
+import { Runtime, LinkSim, Node } from "../../../src/types/graph";
 import * as graph from "../../../src/components/client/graph";
 
-const endKey = (end: Link["source"] | Link["target"]): string =>
+const endKey = (end: LinkSim["source"] | LinkSim["target"]): string =>
   typeof end === "string"
     ? end
     : typeof end === "number"
@@ -167,7 +167,7 @@ describe("removeLink", () => {
     } as unknown as Runtime;
 
     const handlers = {} as ReturnType<typeof graph.createNodeInteractions>;
-    const toRemove: Link = { source: a, target: b };
+    const toRemove: LinkSim = { source: a, target: b };
 
     await graph.removeLink(rt, toRemove, handlers);
 

@@ -54,7 +54,7 @@ describe("POST /api/graph", () => {
   it("returns 400 when graph is missing", async () => {
     const req = new Request("http://localhost/api/graph", {
       method: "POST",
-      body: JSON.stringify({}), // no graph
+      body: JSON.stringify({}),
     });
 
     const res = await POST(req);
@@ -63,7 +63,7 @@ describe("POST /api/graph", () => {
     const json = await res.json();
     expect(json.error).toBe("graph is required");
   });
-  //
+
   it("upserts the graph and calls upsert", async () => {
     const graph = {
       nodes: [{ id: "n1" }],
