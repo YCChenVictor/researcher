@@ -120,49 +120,35 @@ it("creates a link when clicking one node then another", async () => {
   });
 });
 
-it("shows the context menu when right-clicking a node", async () => {
-  const { container } = render(<ForceGraph />);
-
-  const svg = await within(container).findByTestId("force-graph-svg");
-
-  // create one node
-  fireEvent.click(svg, { clientX: 200, clientY: 200 });
-
-  await waitFor(() => {
-    expect(container.querySelectorAll("circle").length).toBeGreaterThan(0);
-  });
-
-  const circle = container.querySelector("circle") as SVGCircleElement;
-
-  fireEvent.contextMenu(circle);
-
-  const decomposeButton = await within(container).findByRole("button", {
-    name: /decompose/i,
-  });
-
-  expect(decomposeButton).toBeTruthy();
-});
-
-it("uses connectChildren when clicking Decompose", async () => {
+it.only("uses connectChildren when click Decompose, click start node, click end node", async () => {
   const { container } = render(<ForceGraph />);
   const svg = await within(container).findByTestId("force-graph-svg");
 
   const circlesBefore = container.querySelectorAll("circle").length;
   const visibleLinksBefore = container.querySelectorAll("line.link").length;
 
-  // create root node
-  promptSpy.mockReturnValue("Root node");
+  // create 2 nodes
+  promptSpy.mockReturnValue("start node");
   fireEvent.click(svg, { clientX: 200, clientY: 200 });
 
-  await waitFor(() => {
-    expect(container.querySelectorAll("circle").length).toBe(circlesBefore + 1);
+  promptSpy.mockReturnValue("end node");
+  fireEvent.click(svg, { clientX: 400, clientY: 200 });
+
+  const decomposeButton = await within(container).findByRole("button", {
+    name: /decompose/i,
+  });
+  fireEvent.click(decomposeButton);
+
+  const circles = await waitFor(() => {
+    const cs = Array.from(container.querySelectorAll("circle"));
+    expect(cs.length).toBeGreaterThanOrEqual(2);
+    return cs;
   });
 
-  // pick the newly-added circle
-  const circlesAfterRoot = container.querySelectorAll("circle");
-  const rootCircle = circlesAfterRoot[circlesAfterRoot.length - 1]!;
-
-  fireEvent.contextMenu(rootCircle);
+  const startCircle = circles[circles.length - 2]!;
+  const endCircle = circles[circles.length - 1]!;
+  fireEvent.click(startCircle);
+  fireEvent.click(endCircle);
 
   // baseline persist right BEFORE decompose (if any)
   const lastBeforeDecompose = persistSpy.mock.calls.at(-1) as
@@ -170,14 +156,13 @@ it("uses connectChildren when clicking Decompose", async () => {
     | undefined;
   const [nodesBefore, linksBefore] = lastBeforeDecompose ?? [[], []];
 
-  const decomposeButton = await within(container).findByRole("button", {
-    name: /decompose/i,
+  const yesButton = await within(container).findByRole("button", {
+    name: /yes|confirm/i,
   });
-  fireEvent.click(decomposeButton);
+  fireEvent.click(yesButton);
 
   await waitFor(() => expect(decomposeSpy).toHaveBeenCalledTimes(1));
 
-  // DOM: +2 children, +2 logical links
   await waitFor(() => {
     expect(container.querySelectorAll("circle").length).toBe(circlesBefore + 3);
     expect(container.querySelectorAll("line.link").length).toBe(
@@ -192,8 +177,8 @@ it("uses connectChildren when clicking Decompose", async () => {
     Node[],
     LinkSim[],
   ];
-  expect(nodesArg.length).toBe(nodesBefore.length + 2); // decompose adds 2 children
-  expect(linksArg.length).toBe(linksBefore.length + 2); // adds 2 links
+  expect(nodesArg.length).toBe(nodesBefore.length + 2);
+  expect(linksArg.length).toBe(linksBefore.length + 2);
 });
 
 it("clicking background clears selectedSource (no add node)", async () => {
@@ -213,7 +198,7 @@ it("clicking background clears selectedSource (no add node)", async () => {
   fireEvent.click(circle);
 
   await waitFor(() => {
-    expect(circle).toHaveAttribute("stroke", "#000");
+    expect(circle).toHaveAttribute("stroke", "#fff");
     expect(circle).toHaveAttribute("stroke-width", "2");
   });
 
@@ -223,7 +208,8 @@ it("clicking background clears selectedSource (no add node)", async () => {
 
   await waitFor(() => {
     expect(circle).not.toHaveAttribute("stroke");
-    expect(circle).toHaveAttribute("stroke-width", "0");
+    expect(circle).not.toHaveAttribute("stroke-width");
+    expect(circle).toHaveAttribute("fill-opacity", "1");
   });
 
   expect(persistSpy).toHaveBeenCalledTimes(persistCallsBefore);

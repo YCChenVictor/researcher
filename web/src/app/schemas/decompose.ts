@@ -6,4 +6,7 @@ const decomposeBody = z.object({
   numberOfSubTopic: z.number().int().min(1, "must be at least 1"),
 });
 
+type DecomposeBody = z.infer<typeof decomposeBody>;
+
 export { decomposeBody };
+export type { DecomposeBody };
