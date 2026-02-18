@@ -22,12 +22,15 @@ const makeDeps = () => {
   const setSelectedSource = vi.fn();
   const setPendingPair = vi.fn();
   const setShowOptions = vi.fn();
+  const openDecomposeModal = vi.fn();
 
   const deps: NodeClickDeps = {
+    mode: "link",
     setSelectedSource,
     openWindow,
     setPendingPair,
     setShowOptions,
+    openDecomposeModal,
   };
 
   return {
@@ -36,6 +39,7 @@ const makeDeps = () => {
     setSelectedSource,
     setPendingPair,
     setShowOptions,
+    openDecomposeModal,
   };
 };
 

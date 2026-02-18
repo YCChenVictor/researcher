@@ -17,10 +17,15 @@ import {
   addNodeAt,
   removeLink,
   addLink,
+  Mode,
+  DecomposeDraft,
+  decomposeRoute,
 } from "./client/graph";
 import type { Node, LinkSim, Runtime, Menu, NodePair } from "../types/graph";
+
 import NodeContextMenu from "./NodeContextMenu";
 import LinkContextMenu from "./LinkContextMenu";
+import DecomposeModal from "./DecomposeModal";
 
 type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
 
@@ -28,11 +33,13 @@ export const ForceGraph: React.FC = () => {
   const [menu, setMenu] = useState<Menu>(null);
   const [showConnectOptions, setShowConnectOptions] = useState(false);
   const [pendingPair, setPendingPair] = useState<NodePair | null>(null);
+  const [decomposeDraft, setDecomposeDraft] = useState<DecomposeDraft>(null);
 
+  const rtRef = useRef<Runtime | null>(null);
+  const modeRef = useRef<Mode>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const rtRef = useRef<Runtime | null>(null);
   const interactionsRef = useRef<ReturnType<
     typeof createNodeInteractions
   > | null>(null);
@@ -45,6 +52,19 @@ export const ForceGraph: React.FC = () => {
     if (pendingPair && rtRef.current && interactionsRef.current) {
       addLink(rtRef.current, pendingPair.source, pendingPair.target);
     }
+
+    setShowConnectOptions(false);
+    setPendingPair(null);
+  };
+
+  const handleDecompose = () => {
+    if (!pendingPair) return;
+
+    setDecomposeDraft({
+      start: pendingPair.source,
+      end: pendingPair.target,
+    });
+
     setShowConnectOptions(false);
     setPendingPair(null);
   };
@@ -53,6 +73,8 @@ export const ForceGraph: React.FC = () => {
     setShowConnectOptions(false);
     setPendingPair(null);
   };
+
+  const close = () => setDecomposeDraft(null);
 
   useEffect(() => {
     let alive = true;
@@ -81,6 +103,7 @@ export const ForceGraph: React.FC = () => {
         width,
         height,
       );
+
       const drag = createDrag(simulation);
 
       const rt: Runtime = {
@@ -101,9 +124,14 @@ export const ForceGraph: React.FC = () => {
         setMenu,
       };
 
-      const interactions = createNodeInteractions(rt);
-
       rtRef.current = rt;
+
+      const interactions = createNodeInteractions(
+        rt,
+        () => modeRef.current,
+        setDecomposeDraft,
+      );
+
       interactionsRef.current = interactions;
 
       updateLinks(rt);
@@ -131,7 +159,7 @@ export const ForceGraph: React.FC = () => {
       simulation.on("tick", () => onTick(rt));
     };
 
-    run().catch(console.error);
+    void run();
 
     return () => {
       alive = false;
@@ -149,6 +177,20 @@ export const ForceGraph: React.FC = () => {
         data-testid="force-graph-svg"
         className="h-full w-full"
       />
+
+      {decomposeDraft && (
+        <DecomposeModal
+          onClose={close}
+          onConfirm={async () => {
+            const draft = decomposeDraft;
+            if (!draft) return;
+
+            const titles = await decomposeRoute(draft.start.key, draft.end.key);
+            connectChildrenRef.current?.(draft.end, titles);
+            close();
+          }}
+        />
+      )}
 
       {menu?.kind === "node" && (
         <NodeContextMenu
@@ -196,7 +238,7 @@ export const ForceGraph: React.FC = () => {
 
               <button
                 className="rounded bg-green-600 px-3 py-2 text-white"
-                onClick={handleCloseConnectOptions}
+                onClick={handleDecompose}
               >
                 Decompose
               </button>

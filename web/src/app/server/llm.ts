@@ -1,9 +1,19 @@
 import OpenAI from "openai";
 
+type BuildMessageArg =
+  | {
+      mode: "route";
+      reasoningRoute: string[];
+    }
+  | {
+      mode: "single";
+      topic: string;
+    };
+
 const call = async (
   messages: { role: "system" | "user" | "assistant"; content: string }[],
 ) => {
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const res = await client.chat.completions.create({
     model: "gpt-4",
@@ -14,43 +24,52 @@ const call = async (
   return res.choices[0].message.content;
 };
 
-const buildMessage = async ({
-  reasoningRoute,
-  numberOfSubTopic,
-}: {
-  reasoningRoute: string[];
-  numberOfSubTopic: number;
-}): Promise<{ role: "system" | "user" | "assistant"; content: string }[]> => {
-  const topic = reasoningRoute[0];
-
-  return [
-    {
-      role: "system",
-      content: `
+const buildMessage = async (
+  arg: BuildMessageArg,
+): Promise<{ role: "system" | "user" | "assistant"; content: string }[]> => {
+  const system = {
+    role: "system" as const,
+    content: `
 You are a cross-disciplinary analyst.
 
 Rules:
-- Titles only (no explanations).
-- Exactly ${numberOfSubTopic} items.
-- Title length: no more than 6 words.
-- Keep consistency with the provided reasoning route (do not introduce unrelated themes).
-
-Return ONLY valid JSON:
+- Titles only.
+- No explanations.
+- Return ONLY valid JSON:
 {
   "topics": [
-    topic1, topic2, ...
+    { "title": "Topic 1" },
+    { "title": "Topic 2" }
   ]
 }
     `.trim(),
-    },
+  };
+
+  if (arg.mode === "route") {
+    const route = [...arg.reasoningRoute];
+    const topic = route[route.length - 1];
+
+    return [
+      system,
+      {
+        role: "user",
+        content: `
+Decompose the final topic '${topic}' into root causes.
+
+Reasoning route:
+${route.map((t) => `'${t}'`).join(" -> ")}
+        `.trim(),
+      },
+    ];
+  }
+
+  return [
+    system,
     {
       role: "user",
       content: `
-Decompose the question “'${topic}'”. This topic was derived from reasoning: ${reasoningRoute
-        .reverse()
-        .map((t, i) => `'${t}'${i === reasoningRoute.length - 1 ? "" : " -> "}`)
-        .join("")}
-    `.trim(),
+Decompose the topic '${arg.topic}' into root causes.
+      `.trim(),
     },
   ];
 };
