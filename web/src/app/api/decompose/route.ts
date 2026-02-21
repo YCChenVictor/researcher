@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
         reasoningRoute,
         numberOfSubTopic: numberOfSubTopic ?? 3,
       });
+
       // Will truly enable it after enough budget
       // eslint-disable-next-line no-console
       console.log(messages);

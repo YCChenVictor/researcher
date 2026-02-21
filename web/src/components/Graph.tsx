@@ -16,21 +16,50 @@ import {
   onTick,
   addNodeAt,
   removeLink,
+  Mode,
+  DecomposeDraft,
+  decompose,
 } from "./client/graph";
 import type { Node, LinkSim, Runtime, Menu } from "../types/graph";
+
 import NodeContextMenu from "./NodeContextMenu";
 import LinkContextMenu from "./LinkContextMenu";
+import DecomposeModal from "./DecomposeModal";
 
 type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
 
 export const ForceGraph: React.FC = () => {
+  const [hint, setHint] = useState<string | null>(null);
+  const [mode, _setMode] = useState<Mode>(null);
   const [menu, setMenu] = useState<Menu>(null);
+  const [decomposeDraft, setDecomposeDraft] = useState<DecomposeDraft>(null);
 
+  const rtRef = useRef<Runtime | null>(null);
+  const modeRef = useRef<Mode>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
   const removeNodeRef = useRef<((n: Node) => void) | null>(null);
   const removeLinkRef = useRef<((l: LinkSim) => Promise<void>) | null>(null);
+
+  const close = () => setDecomposeDraft(null);
+
+  const setModeSafe = (updater: (m: Mode) => Mode) => {
+    _setMode((prev) => {
+      const next = updater(prev);
+      modeRef.current = next;
+      return next;
+    });
+  };
+
+  const btn = (active: boolean) =>
+    [
+      "rounded-lg px-3 py-2",
+      "border border-white/10",
+      active
+        ? "bg-indigo-500/30 ring-2 ring-indigo-400/50"
+        : "bg-white/10 hover:bg-white/15",
+    ].join(" ");
 
   useEffect(() => {
     let alive = true;
@@ -78,7 +107,12 @@ export const ForceGraph: React.FC = () => {
         setMenu,
       };
 
-      const interactions = createNodeInteractions(rt);
+      rtRef.current = rt;
+      const interactions = createNodeInteractions(
+        rt,
+        () => modeRef.current,
+        setDecomposeDraft,
+      );
 
       updateLinks(rt);
       updateNodes(rt, interactions);
@@ -118,11 +152,64 @@ export const ForceGraph: React.FC = () => {
       ref={containerRef}
       className="fixed inset-0 bg-slate-600 text-slate-100 overflow-hidden"
     >
+      {hint && (
+        <div className="absolute top-14 left-3 z-50 rounded-lg bg-black/40 px-3 py-2 text-sm border border-white/10">
+          {hint}
+        </div>
+      )}
+
+      <div className="absolute top-3 left-3 z-50 flex gap-2">
+        <button
+          type="button"
+          className={btn(mode === "decompose")}
+          onClick={() =>
+            setModeSafe((m) => {
+              const next = m === "decompose" ? null : "decompose";
+              setHint(
+                next === "decompose"
+                  ? "Decompose: click start node and then target node"
+                  : null,
+              );
+              return next;
+            })
+          }
+        >
+          Decompose
+        </button>
+
+        <button
+          type="button"
+          className={btn(mode === "link")}
+          onClick={() =>
+            setModeSafe((m) => {
+              const next = m === "link" ? null : "link";
+              setHint(
+                next === "link"
+                  ? "Link: click start node and then target node"
+                  : null,
+              );
+              return next;
+            })
+          }
+        >
+          Link
+        </button>
+      </div>
+
       <svg
         ref={svgRef}
         data-testid="force-graph-svg"
         className="w-full h-full"
       />
+
+      {decomposeDraft && (
+        <DecomposeModal
+          onClose={close}
+          onConfirm={() => {
+            decompose(decomposeDraft.start.key, decomposeDraft.end.key);
+          }}
+        />
+      )}
 
       {menu?.kind === "node" && (
         <NodeContextMenu

@@ -22,9 +22,11 @@ const makeDeps = () => {
   const addLink = vi.fn();
   const openWindow = vi.fn();
   const deps: NodeClickDeps = {
+    mode: "link",
     setSelectedSource,
     addLink,
     openWindow,
+    openDecomposeModal: vi.fn(),
   };
   return { deps, setSelectedSource, addLink, openWindow };
 };
