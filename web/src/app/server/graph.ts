@@ -33,7 +33,7 @@ const get = async (): Promise<GraphPayload> => {
 };
 
 async function upsert(graph: unknown) {
-  const content = Buffer.from(JSON.stringify(graph, null, 2)).toString(
+  const content = Buffer.from(JSON.stringify(graph, null, 2), "utf8").toString(
     "base64",
   );
 
