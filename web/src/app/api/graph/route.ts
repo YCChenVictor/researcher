@@ -20,6 +20,9 @@ export async function POST(req: Request) {
     const json = await req.json();
     const result = postGraphBodySchema.safeParse(json);
 
+    console.log("zxcvvcxzzvxc");
+    console.log(result.success);
+
     if (!result.success) {
       return NextResponse.json(
         {

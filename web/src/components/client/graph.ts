@@ -26,6 +26,9 @@ const persistGraph = async (nodes: Node[], links: LinkSim[]) => {
     })),
   };
 
+  console.log("xcvxzcvzcx");
+  console.log(graph);
+
   const res = await fetch("/api/graph", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
