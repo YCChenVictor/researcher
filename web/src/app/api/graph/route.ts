@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { upsert, get } from "../../server/graph";
+import { postGraphBodySchema } from "../../schemas/graph";
 
 export async function GET() {
   try {
@@ -15,16 +16,24 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { graph } = (await req.json()) as {
-    graph?: { nodes: unknown[]; links: unknown[] };
-  };
-
-  if (!graph) {
-    return NextResponse.json({ error: "graph is required" }, { status: 400 });
-  }
-
   try {
+    const json = await req.json();
+    const result = postGraphBodySchema.safeParse(json);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid graph payload",
+          issues: result.error.issues,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { graph } = result.data;
+
     await upsert(graph);
+
     return NextResponse.json(graph, { status: 201 });
   } catch (err) {
     console.error(err);

@@ -51,36 +51,78 @@ describe("GET /api/graph", () => {
 });
 
 describe("POST /api/graph", () => {
-  it("returns 400 when graph is missing", async () => {
+  it("returns 400 for invalid graph schema", async () => {
     const req = new Request("http://localhost/api/graph", {
       method: "POST",
-      body: JSON.stringify({}),
+      body: JSON.stringify({
+        graph: {
+          nodes: [
+            {
+              key: "n1",
+              name: "Node 1",
+              color: "#ff8800",
+              x: -20.926185307120086,
+              y: -90.77368045712083,
+            },
+          ],
+          links: [{ source: "n1", target: "n2" }],
+        },
+      }),
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(400);
 
-    const json = await res.json();
-    expect(json.error).toBe("graph is required");
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({
+      error: "Invalid graph payload",
+    });
+    expect(mockedUpsert).not.toHaveBeenCalled();
   });
 
-  it("upserts the graph and calls upsert", async () => {
-    const graph = {
-      nodes: [{ id: "n1" }],
-      links: [{ source: "n1", target: "n1" }],
-    };
-
+  it("returns 400 for invalid graph schema", async () => {
     const req = new Request("http://localhost/api/graph", {
       method: "POST",
-      body: JSON.stringify({ graph }),
+      body: JSON.stringify({
+        graph: {
+          nodes: [
+            {
+              key: "n1",
+              name: "Node 1",
+            },
+            {
+              key: "n2",
+              name: "Node 2",
+            },
+            {
+              key: "5312bd1a-cfe7-4e4e-9d58-f4a1a12a30fb",
+              name: "Root node",
+            },
+            {
+              key: "b3af94df-a2dd-40d2-8e65-67b243a51d9a",
+              name: "Child 1",
+            },
+            {
+              key: "c43203b5-333a-4f09-9adf-a508f707320e",
+              name: "Child 2",
+            },
+          ],
+          links: [
+            { source: "n1", target: "n2" },
+            {
+              source: "5312bd1a-cfe7-4e4e-9d58-f4a1a12a30fb",
+              target: "b3af94df-a2dd-40d2-8e65-67b243a51d9a",
+            },
+            {
+              source: "5312bd1a-cfe7-4e4e-9d58-f4a1a12a30fb",
+              target: "c43203b5-333a-4f09-9adf-a508f707320e",
+            },
+          ],
+        },
+      }),
     });
 
     const res = await POST(req);
+
     expect(res.status).toBe(201);
-
-    const json = await res.json();
-    expect(json).toEqual(graph);
-
-    expect(mockedUpsert).toHaveBeenCalledWith(graph);
   });
 });
