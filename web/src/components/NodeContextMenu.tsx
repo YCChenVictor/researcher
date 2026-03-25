@@ -48,6 +48,22 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 }) => {
   const [hasArticle, setHasArticle] = useState<boolean | null>(null);
 
+  const importChildrenFromJson = (raw: string) => {
+    const parsed = JSON.parse(raw) as {
+      topics?: { title?: string }[];
+    };
+
+    const titles = (parsed.topics ?? [])
+      .map((x) => x.title?.trim())
+      .filter((x): x is string => Boolean(x));
+
+    if (titles.length === 0) {
+      throw new Error("No valid topics found");
+    }
+
+    connectChildren(node, titles);
+  };
+
   useEffect(() => {
     let alive = true;
     setHasArticle(null);
@@ -67,6 +83,21 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       alive = false;
     };
   }, [node.key]);
+
+  const handleImportChildren = () => {
+    const raw = window.prompt(`Paste JSON here:
+{"topics":[{"title":"Ignorance"},{"title":"Attachment"}]}`);
+
+    if (!raw) return;
+
+    try {
+      importChildrenFromJson(raw);
+      closeMenu();
+    } catch (err) {
+      console.error(err);
+      window.alert("Invalid JSON format");
+    }
+  };
 
   const options = useMemo<MenuOption[]>(() => {
     const base: MenuOption[] = [
@@ -123,7 +154,6 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       case "decompose":
         try {
           const titles = await decomposeNode(node);
-          // Will truly enable it after enough budget
           if (process.env.NODE_ENV === "development") {
             // eslint-disable-next-line no-console
             console.log(titles);
@@ -162,8 +192,8 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
               type="button"
               aria-label="Close"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full
-                       text-zinc-300 hover:text-zinc-100 hover:bg-white/10
-                       focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-0"
+                text-zinc-300 hover:text-zinc-100 hover:bg-white/10
+                focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-0"
               onClick={(e) => {
                 e.stopPropagation();
                 closeMenu();
@@ -173,6 +203,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
             </button>
           </div>
         </div>
+
         <div className="p-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
@@ -186,17 +217,18 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 {options.map((opt) => {
                   if (
                     !["init", "view", "edit", "destroy"].includes(opt.action.id)
-                  )
+                  ) {
                     return null;
+                  }
 
                   return (
                     <button
                       key={opt.action.id}
                       type="button"
                       className="group w-full text-left rounded-xl px-4 py-3
-                         border border-transparent hover:border-white/10 hover:bg-white/5
-                         focus:outline-none focus:ring-2 focus:ring-indigo-400/70
-                         disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                        border border-transparent hover:border-white/10 hover:bg-white/5
+                        focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                        disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
                       onClick={() => void handleClick(opt.action)}
                       disabled={hasArticle === null}
                     >
@@ -211,6 +243,7 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 })}
               </div>
             </div>
+
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
               <div className="px-4 py-2.5 border-b border-white/10">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
@@ -222,9 +255,9 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 <button
                   type="button"
                   className="group w-full text-left rounded-xl px-4 py-3
-     border border-transparent hover:border-white/10 hover:bg-white/5
-     focus:outline-none focus:ring-2 focus:ring-indigo-400/70
-     disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                    border border-transparent hover:border-white/10 hover:bg-white/5
+                    focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                    disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
                   onClick={() => void handleClick({ id: "decompose" })}
                   disabled={hasArticle === null}
                 >
@@ -234,6 +267,23 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                   <div className="mt-0.5 text-xs text-zinc-400">
                     Ask AI to generate child topics and link them under this
                     node.
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="group w-full text-left rounded-xl px-4 py-3
+                    border border-transparent hover:border-white/10 hover:bg-white/5
+                    focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                    disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                  onClick={handleImportChildren}
+                  disabled={hasArticle === null}
+                >
+                  <div className="text-sm font-medium text-zinc-100">
+                    Import Children
+                  </div>
+                  <div className="mt-0.5 text-xs text-zinc-400">
+                    Paste JSON to create child nodes
                   </div>
                 </button>
               </div>
