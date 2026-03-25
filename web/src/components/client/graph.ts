@@ -7,24 +7,23 @@ import type {
   GraphLayers,
   Deps,
   LinkJson,
+  NodePair,
 } from "../../types/graph";
 
-export type NodeClickDeps = {
+type NodeClickDeps = {
   setSelectedSource: (node: Node | null) => void;
-  addLink: (source: Node, target: Node) => void;
+  setPendingPair: (pair: NodePair | null) => void;
+  setShowOptions: (show: boolean) => void;
   openWindow?: (url: string) => void;
-};
-
-export type ShowContextMenuDeps = {
-  zoomG: d3.Selection<SVGGElement, unknown, null, undefined>;
-  removeContextMenu: () => void;
-  log?: (msg: string, node: Node) => void;
 };
 
 const persistGraph = async (nodes: Node[], links: LinkSim[]) => {
   const graph = {
-    nodes: serializeNodes(nodes),
-    links: serializeLinks(links),
+    nodes: nodes.map(({ key, name }) => ({ key, name })),
+    links: links.map((l) => ({
+      source: typeof l.source === "string" ? l.source : l.source.key,
+      target: typeof l.target === "string" ? l.target : l.target.key,
+    })),
   };
 
   const res = await fetch("/api/graph", {
@@ -46,7 +45,8 @@ const handleNodeClickLogic = (
 ) => {
   const {
     setSelectedSource,
-    addLink,
+    setPendingPair,
+    setShowOptions,
     openWindow = (url) => window.open(url, "_blank"),
   } = deps;
 
@@ -67,8 +67,12 @@ const handleNodeClickLogic = (
     return;
   }
 
-  addLink(selectedSource, d);
+  setPendingPair({
+    source: selectedSource,
+    target: d,
+  });
   setSelectedSource(null);
+  setShowOptions(true);
 };
 
 const fetchGraph = async (): Promise<{ nodes: Node[]; links: LinkSim[] }> => {
@@ -132,15 +136,6 @@ const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   };
   return json.answer.topics.map((t) => t.title);
 };
-
-const serializeLinks = (links: LinkSim[]) =>
-  links.map((l) => ({
-    source: typeof l.source === "string" ? l.source : l.source.key,
-    target: typeof l.target === "string" ? l.target : l.target.key,
-  }));
-
-const serializeNodes = (nodes: Node[]) =>
-  nodes.map(({ vx: _vx, vy: _vy, index: _index, ...rest }) => rest);
 
 const setupSvg = (
   svgEl: SVGSVGElement,
@@ -338,7 +333,8 @@ const createNodeInteractions = (rt: Runtime) => {
   const onClick = (event: MouseEvent, d: Node) => {
     handleNodeClickLogic(event, d, rt.selectedSource, {
       setSelectedSource: (n) => setSelectedSource(rt, n),
-      addLink: (sourceNode, targetNode) => addLink(rt, sourceNode, targetNode),
+      setPendingPair: rt.setPendingPair,
+      setShowOptions: rt.setShowConnectOptions,
     });
   };
 
@@ -360,14 +356,24 @@ const bindLinkForce = (
   linkForce.links(links);
 };
 
+const getNodeKey = (node: string | Node) =>
+  typeof node === "string" ? node : node.key;
+
 const addLink = (rt: Runtime, sourceNode: Node, targetNode: Node) => {
+  const exists = rt.links.some(
+    (l) =>
+      getNodeKey(l.source) === sourceNode.key &&
+      getNodeKey(l.target) === targetNode.key,
+  );
+  if (exists) return;
+
   rt.links = [...rt.links, { source: sourceNode.key, target: targetNode.key }];
 
   bindLinkForce(rt.simulation, rt.links);
   updateLinks(rt);
   rt.simulation.alpha(1).restart();
 
-  rt.persist(rt.nodes, rt.links);
+  void persistGraph(rt.nodes, rt.links);
 };
 
 const updateLinks = (rt: Runtime) => {
@@ -537,7 +543,7 @@ const addNodeAt = (
     updateNodes: () => updateNodes(rt, handlers),
   });
 
-  if (next) rt.persist(rt.nodes, rt.links);
+  if (next) persistGraph(rt.nodes, rt.links);
 };
 
 const redirect = (url: string) => window.location.assign(url);
@@ -570,6 +576,8 @@ const endToStart = (
   return path;
 };
 
+export type { NodeClickDeps };
+
 export {
   endToStart,
   addNodeAt,
@@ -594,4 +602,5 @@ export {
   redirect,
   endKey,
   idsToTitles,
+  addLink,
 };
