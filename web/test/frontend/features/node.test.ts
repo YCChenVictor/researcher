@@ -18,68 +18,85 @@ const makeEvent = (
 };
 
 const makeDeps = () => {
-  const setSelectedSource = vi.fn();
-  const addLink = vi.fn();
   const openWindow = vi.fn();
+  const setSelectedSource = vi.fn();
+  const setPendingPair = vi.fn();
+  const setShowOptions = vi.fn();
+
   const deps: NodeClickDeps = {
     setSelectedSource,
-    addLink,
     openWindow,
+    setPendingPair,
+    setShowOptions,
   };
-  return { deps, setSelectedSource, addLink, openWindow };
+
+  return {
+    deps,
+    openWindow,
+    setSelectedSource,
+    setPendingPair,
+    setShowOptions,
+  };
 };
 
 describe("handleNodeClickLogic", () => {
   it("opens window when metaKey or ctrlKey pressed", () => {
     const node: Node = { name: "test", key: "https://example.com" };
     const event = makeEvent({ metaKey: true });
-    const { deps, openWindow, setSelectedSource, addLink } = makeDeps();
+    const { deps, openWindow, setSelectedSource } = makeDeps();
 
     handleNodeClickLogic(event, node, null, deps);
 
     expect(event.stopPropagation).toHaveBeenCalled();
     expect(openWindow).toHaveBeenCalledWith("https://example.com");
     expect(setSelectedSource).not.toHaveBeenCalled();
-    expect(addLink).not.toHaveBeenCalled();
   });
 
   it("clears selection when clicking the same selected node", () => {
     const node: Node = { name: "test", key: "a" };
     const event = makeEvent();
-    const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
+    const { deps, setSelectedSource, openWindow } = makeDeps();
 
     handleNodeClickLogic(event, node, node, deps);
 
     expect(event.stopPropagation).toHaveBeenCalled();
     expect(setSelectedSource).toHaveBeenCalledWith(null);
-    expect(addLink).not.toHaveBeenCalled();
     expect(openWindow).not.toHaveBeenCalled();
   });
 
   it("selects node when nothing is selected", () => {
     const node: Node = { name: "test", key: "a" };
     const event = makeEvent();
-    const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
+    const { deps, setSelectedSource, openWindow } = makeDeps();
 
     handleNodeClickLogic(event, node, null, deps);
 
     expect(event.stopPropagation).toHaveBeenCalled();
     expect(setSelectedSource).toHaveBeenCalledWith(node);
-    expect(addLink).not.toHaveBeenCalled();
     expect(openWindow).not.toHaveBeenCalled();
   });
 
-  it("creates link when another node is selected", () => {
+  it("when another node is selected, it pops options", () => {
     const source: Node = { name: "test", key: "source" };
     const target: Node = { name: "test", key: "target" };
     const event = makeEvent();
-    const { deps, setSelectedSource, addLink, openWindow } = makeDeps();
+    const {
+      deps,
+      setSelectedSource,
+      setPendingPair,
+      setShowOptions,
+      openWindow,
+    } = makeDeps();
 
     handleNodeClickLogic(event, target, source, deps);
 
     expect(event.stopPropagation).toHaveBeenCalled();
-    expect(addLink).toHaveBeenCalledWith(source, target);
+    expect(setPendingPair).toHaveBeenCalledWith({
+      source,
+      target,
+    });
     expect(setSelectedSource).toHaveBeenCalledWith(null);
+    expect(setShowOptions).toHaveBeenCalledWith(true);
     expect(openWindow).not.toHaveBeenCalled();
   });
 });

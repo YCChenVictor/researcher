@@ -32,7 +32,12 @@ export type RawLinks = Record<
   { parents: string[]; children: string[] }
 >;
 
-export type Runtime = {
+type NodePair = {
+  source: Node;
+  target: Node;
+};
+
+type Runtime = {
   nodes: Node[];
   links: LinkSim[];
 
@@ -49,6 +54,8 @@ export type Runtime = {
 
   selectedSource: Node | null;
 
+  setPendingPair: (pair: NodePair | null) => void;
+  setShowConnectOptions: (show: boolean) => void;
   persist: (nodes: Node[], links: LinkSim[]) => void;
   setMenu: (menu: Menu) => void;
 };
@@ -67,3 +74,5 @@ export type GraphLayers = {
   nodeGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
   labelGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
 };
+
+export type { NodePair, Runtime };

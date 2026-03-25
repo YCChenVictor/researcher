@@ -16,8 +16,9 @@ import {
   onTick,
   addNodeAt,
   removeLink,
+  addLink,
 } from "./client/graph";
-import type { Node, LinkSim, Runtime, Menu } from "../types/graph";
+import type { Node, LinkSim, Runtime, Menu, NodePair } from "../types/graph";
 import NodeContextMenu from "./NodeContextMenu";
 import LinkContextMenu from "./LinkContextMenu";
 
@@ -25,12 +26,33 @@ type ConnectChildrenFn = (parent: Node, titles: string[]) => void;
 
 export const ForceGraph: React.FC = () => {
   const [menu, setMenu] = useState<Menu>(null);
+  const [showConnectOptions, setShowConnectOptions] = useState(false);
+  const [pendingPair, setPendingPair] = useState<NodePair | null>(null);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const rtRef = useRef<Runtime | null>(null);
+  const interactionsRef = useRef<ReturnType<
+    typeof createNodeInteractions
+  > | null>(null);
+
   const connectChildrenRef = useRef<ConnectChildrenFn | null>(null);
   const removeNodeRef = useRef<((n: Node) => void) | null>(null);
   const removeLinkRef = useRef<((l: LinkSim) => Promise<void>) | null>(null);
+
+  const handleConnect = () => {
+    if (pendingPair && rtRef.current && interactionsRef.current) {
+      addLink(rtRef.current, pendingPair.source, pendingPair.target);
+    }
+    setShowConnectOptions(false);
+    setPendingPair(null);
+  };
+
+  const handleCloseConnectOptions = () => {
+    setShowConnectOptions(false);
+    setPendingPair(null);
+  };
 
   useEffect(() => {
     let alive = true;
@@ -42,7 +64,6 @@ export const ForceGraph: React.FC = () => {
       if (!svgEl || !containerEl) return;
 
       const initial = await fetchGraph();
-
       if (!alive) return;
 
       const width = containerEl.clientWidth;
@@ -74,11 +95,16 @@ export const ForceGraph: React.FC = () => {
         nodeSel: nodeGroup.selectAll<SVGCircleElement, Node>("circle"),
         labelSel: labelGroup.selectAll<SVGTextElement, Node>("text"),
         selectedSource: null,
+        setPendingPair,
+        setShowConnectOptions,
         persist: persistGraph,
         setMenu,
       };
 
       const interactions = createNodeInteractions(rt);
+
+      rtRef.current = rt;
+      interactionsRef.current = interactions;
 
       updateLinks(rt);
       updateNodes(rt, interactions);
@@ -116,12 +142,12 @@ export const ForceGraph: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-slate-600 text-slate-100 overflow-hidden"
+      className="fixed inset-0 overflow-hidden bg-slate-600 text-slate-100"
     >
       <svg
         ref={svgRef}
         data-testid="force-graph-svg"
-        className="w-full h-full"
+        className="h-full w-full"
       />
 
       {menu?.kind === "node" && (
@@ -149,6 +175,41 @@ export const ForceGraph: React.FC = () => {
             setMenu(null);
           }}
         />
+      )}
+
+      {showConnectOptions && pendingPair && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-80 rounded-xl bg-white p-4 text-black shadow-xl">
+            <h2 className="mb-3 text-lg font-semibold">Choose action</h2>
+
+            <p className="mb-4 text-sm">
+              {pendingPair.source.name} → {pendingPair.target.name}
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <button
+                className="rounded bg-blue-600 px-3 py-2 text-white"
+                onClick={handleConnect}
+              >
+                Connect
+              </button>
+
+              <button
+                className="rounded bg-green-600 px-3 py-2 text-white"
+                onClick={handleCloseConnectOptions}
+              >
+                Decompose
+              </button>
+
+              <button
+                className="rounded bg-gray-300 px-3 py-2 text-black"
+                onClick={handleCloseConnectOptions}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
