@@ -9,41 +9,45 @@ import { endToStart, idsToTitles } from "../../../components/client/graph";
 export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
-    const { startId, endId, numberOfSubTopic } = decomposeBody.parse(json);
+    const body = decomposeBody.parse(json);
 
     const graph = await getGraph();
 
-    const path = endToStart(graph.links, endId, startId);
-    const reasoningRoute = idsToTitles(graph.nodes, path);
+    let messages;
+    if (body.mode === "route") {
+      const path = endToStart(graph.links, body.endId, body.startId);
+      const reasoningRoute = idsToTitles(graph.nodes, path);
 
-    let answer;
-    if (process.env.NODE_ENV === "development") {
-      const messages = await buildMessage({
+      messages = await buildMessage({
+        mode: "route",
         reasoningRoute,
-        numberOfSubTopic: numberOfSubTopic ?? 3,
       });
-      // Will truly enable it after enough budget
-      // eslint-disable-next-line no-console
-      console.log(messages);
-      answer = {
-        topics: [
-          {
-            title: "test, you should use ChatGPT",
-          },
-          {
-            title: "test, you should use ChatGPT",
-          },
-          {
-            title: "test, you should use ChatGPT",
-          },
-        ],
-      };
     } else {
-      const messages = await buildMessage({
-        reasoningRoute,
-        numberOfSubTopic: numberOfSubTopic ?? 3,
+      messages = await buildMessage({
+        mode: "single",
+        topic: body.topic,
       });
-      answer = await call(messages);
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(messages);
+
+    const answer =
+      process.env.NODE_ENV === "development"
+        ? {
+            topics: [
+              { title: "test, you should use ChatGPT 1" },
+              { title: "test, you should use ChatGPT 2" },
+              { title: "test, you should use ChatGPT 3" },
+            ],
+          }
+        : await call(messages);
+
+    if (!answer || typeof answer === "string") {
+      return NextResponse.json(
+        { error: "Invalid LLM response" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ answer }, { status: 200 });

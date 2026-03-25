@@ -30,6 +30,8 @@ GITHUB_BRANCH=main
 
 ### 3 Run locally
 
+For refresh
+
 ```bash
 yarn dev
 ```

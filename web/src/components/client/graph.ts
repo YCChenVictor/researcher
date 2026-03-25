@@ -10,11 +10,20 @@ import type {
   NodePair,
 } from "../../types/graph";
 
-type NodeClickDeps = {
+type Mode = null | "decompose" | "link";
+
+type DecomposeDraft = {
+  start: Node;
+  end: Node;
+} | null;
+
+export type NodeClickDeps = {
+  mode: Mode;
   setSelectedSource: (node: Node | null) => void;
   setPendingPair: (pair: NodePair | null) => void;
   setShowOptions: (show: boolean) => void;
   openWindow?: (url: string) => void;
+  openDecomposeModal: (draft: { start: Node; end: Node }) => void;
 };
 
 const persistGraph = async (nodes: Node[], links: LinkSim[]) => {
@@ -122,11 +131,15 @@ const buildChildren = (
   return { newNodes, newLinks };
 };
 
-const decompose = async (nodeData: { name: string }): Promise<string[]> => {
+const decomposeNode = async (nodeData: { name: string }): Promise<string[]> => {
   const res = await fetch("/api/decompose", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic: nodeData.name, numberOfSubTopic: 3 }),
+    body: JSON.stringify({
+      mode: "single",
+      topic: nodeData.name,
+      numberOfSubTopic: 3,
+    }),
   });
 
   if (!res.ok) throw new Error(`Decompose failed: ${res.status}`);
@@ -134,6 +147,31 @@ const decompose = async (nodeData: { name: string }): Promise<string[]> => {
   const json = (await res.json()) as {
     answer: { topics: { title: string }[] };
   };
+
+  return json.answer.topics.map((t) => t.title);
+};
+
+const decomposeRoute = async (
+  startId: string,
+  endId: string,
+): Promise<string[]> => {
+  const res = await fetch("/api/decompose", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "route",
+      startId,
+      endId,
+      numberOfSubTopic: 3,
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Decompose failed: ${res.status}`);
+
+  const json = (await res.json()) as {
+    answer: { topics: { title: string }[] };
+  };
+
   return json.answer.topics.map((t) => t.title);
 };
 
@@ -320,8 +358,11 @@ const endKey = (end: LinkSim["source"] | LinkSim["target"]) =>
 
 const updateNodeHighlight = (rt: Runtime) => {
   rt.nodeSel
-    .attr("stroke", (d) => (rt.selectedSource?.key === d.key ? "#000" : null))
-    .attr("stroke-width", (d) => (rt.selectedSource?.key === d.key ? 2 : 0));
+    .attr("stroke", (d) => (rt.selectedSource?.key === d.key ? "#fff" : null))
+    .attr("stroke-width", (d) => (rt.selectedSource?.key === d.key ? 2 : null))
+    .attr("fill-opacity", (d) =>
+      rt.selectedSource && rt.selectedSource.key !== d.key ? 0.6 : 1,
+    );
 };
 
 const setSelectedSource = (rt: Runtime, next: Node | null) => {
@@ -329,12 +370,18 @@ const setSelectedSource = (rt: Runtime, next: Node | null) => {
   updateNodeHighlight(rt);
 };
 
-const createNodeInteractions = (rt: Runtime) => {
+const createNodeInteractions = (
+  rt: Runtime,
+  getMode: () => Mode,
+  setDecomposeDraft: React.Dispatch<React.SetStateAction<DecomposeDraft>>,
+) => {
   const onClick = (event: MouseEvent, d: Node) => {
     handleNodeClickLogic(event, d, rt.selectedSource, {
+      mode: getMode(),
       setSelectedSource: (n) => setSelectedSource(rt, n),
       setPendingPair: rt.setPendingPair,
       setShowOptions: rt.setShowConnectOptions,
+      openDecomposeModal: (draft) => setDecomposeDraft(draft),
     });
   };
 
@@ -486,7 +533,7 @@ const connectChildren = (
   rt.links = [...rt.links, ...newLinks];
 
   rt.simulation.nodes(rt.nodes);
-  bindLinkForce(rt.simulation, rt.links);
+  // bindLinkForce(rt.simulation, rt.links);
 
   updateLinks(rt);
   updateNodes(rt, handlers);
@@ -576,8 +623,6 @@ const endToStart = (
   return path;
 };
 
-export type { NodeClickDeps };
-
 export {
   endToStart,
   addNodeAt,
@@ -585,7 +630,8 @@ export {
   createDrag,
   setupSvg,
   fetchGraph,
-  decompose,
+  decomposeNode,
+  decomposeRoute,
   persistGraph,
   buildChildren,
   handleNodeClickLogic,
@@ -604,3 +650,5 @@ export {
   idsToTitles,
   addLink,
 };
+
+export type { Mode, DecomposeDraft };

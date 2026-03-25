@@ -27,4 +27,4 @@ const postGraphBodySchema = z
   })
   .strict();
 
-export { postGraphBodySchema };
+export { postGraphBodySchema, graphSchema };

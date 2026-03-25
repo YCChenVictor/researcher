@@ -70,4 +70,34 @@ async function upsert(graph: unknown) {
   };
 }
 
-export { get, upsert };
+type ConnectChildrenResult = {
+  createdNodes: Node[];
+  createdLinks: LinkJson[];
+};
+
+const serverConnectChildren = async (params: {
+  parentNodeKey: string;
+  childNames: string[];
+  parentX: number;
+  parentY: number;
+}): Promise<ConnectChildrenResult> => {
+  const titles = [
+    ...new Set(params.childNames.map((title) => title.trim()).filter(Boolean)),
+  ];
+
+  const createdNodes = titles.map((title, index) => ({
+    key: crypto.randomUUID(),
+    name: title,
+    x: params.parentX + 180,
+    y: params.parentY + index * 100,
+  }));
+
+  const createdLinks = createdNodes.map((node) => ({
+    source: params.parentNodeKey,
+    target: node.key,
+  }));
+
+  return { createdNodes, createdLinks };
+};
+
+export { get, upsert, serverConnectChildren };
