@@ -185,8 +185,7 @@ export const ForceGraph: React.FC = () => {
             const draft = decomposeDraft;
             if (!draft) return;
 
-            const titles = await decomposeRoute(draft.start.key, draft.end.key);
-            connectChildrenRef.current?.(draft.end, titles);
+            await decomposeRoute(draft.start.key, draft.end.key);
             close();
           }}
         />
