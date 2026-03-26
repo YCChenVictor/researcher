@@ -3,12 +3,12 @@ import type { Simulation } from "d3-force";
 import type { DragBehavior, SubjectPosition } from "d3-drag";
 import type { Selection } from "d3-selection";
 
-export type Menu =
+type Menu =
   | { kind: "node"; node: Node }
   | { kind: "link"; link: LinkJson; x: number; y: number }
   | null;
 
-export interface Node extends SimulationNodeDatum {
+interface Node extends SimulationNodeDatum {
   key: string;
   name: string;
   x?: number;
@@ -18,16 +18,16 @@ export interface Node extends SimulationNodeDatum {
 }
 
 // Use LinkJson for storage/API (stable string node ids) and LinkSim for d3-force rendering because d3 may mutate source/target from ids into node objects during forceLink initialization.
-export type LinkJson = {
+type LinkJson = {
   source: string;
   target: string;
 };
-export type LinkSim = Omit<SimulationLinkDatum<Node>, "source" | "target"> & {
+type LinkSim = Omit<SimulationLinkDatum<Node>, "source" | "target"> & {
   source: string | Node;
   target: string | Node;
 };
 
-export type RawLinks = Record<
+type RawLinks = Record<
   string,
   { parents: string[]; children: string[] }
 >;
@@ -40,34 +40,25 @@ type NodePair = {
 type Runtime = {
   nodes: Node[];
   links: LinkSim[];
-
   simulation: Simulation<Node, LinkSim>;
-  drag: DragBehavior<SVGCircleElement, Node, Node | SubjectPosition>;
-
+  drag: d3.DragBehavior<SVGGElement, Node, Node>;
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  zoomG: d3.Selection<SVGGElement, unknown, null, undefined>;
   linkGroup: Selection<SVGGElement, unknown, null, undefined>;
   nodeGroup: Selection<SVGGElement, unknown, null, undefined>;
-  labelGroup: Selection<SVGGElement, unknown, null, undefined>;
-
-  linkSel: Selection<SVGLineElement, LinkSim, SVGGElement, unknown> | null;
-  nodeSel: Selection<SVGCircleElement, Node, SVGGElement, unknown>;
-  labelSel: Selection<SVGTextElement, Node, SVGGElement, unknown>;
-
+  linkSel: Selection<SVGLineElement, LinkSim, SVGGElement, unknown>;
+  nodeSel: d3.Selection<SVGGElement, Node, SVGGElement, unknown>;
   selectedSource: Node | null;
-
-  setPendingPair: (pair: NodePair | null) => void;
-  setShowConnectOptions: (show: boolean) => void;
-  persist: (nodes: Node[], links: LinkSim[]) => void;
-  setMenu: (menu: Menu) => void;
 };
 
-export type Deps = {
+type Deps = {
   getNodes: () => Node[];
   setNodes: (next: Node[]) => void; // ✅ not React Dispatch
   simulation: d3.Simulation<Node, LinkSim>;
   updateNodes: () => void;
 };
 
-export type GraphLayers = {
+type GraphLayers = {
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   zoomG: d3.Selection<SVGGElement, unknown, null, undefined>;
   linkGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -75,4 +66,4 @@ export type GraphLayers = {
   labelGroup: d3.Selection<SVGGElement, unknown, null, undefined>;
 };
 
-export type { NodePair, Runtime };
+export type { NodePair, Runtime, Node, LinkJson, LinkSim, GraphLayers };
