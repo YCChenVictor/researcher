@@ -15,7 +15,8 @@ export type MenuAction =
   | { id: "edit" }
   | { id: "init" }
   | { id: "close" }
-  | { id: "destroy" };
+  | { id: "destroy" }
+  | { id: "why" };
 
 type MenuOption = {
   label: string;
@@ -284,6 +285,21 @@ const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                   </div>
                   <div className="mt-0.5 text-xs text-zinc-400">
                     Paste JSON to create child nodes
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="group w-full text-left rounded-xl px-4 py-3
+                    border border-transparent hover:border-white/10 hover:bg-white/5
+                    focus:outline-none focus:ring-2 focus:ring-indigo-400/70
+                    disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent"
+                  onClick={() => void handleClick({ id: "why" })}
+                  disabled={hasArticle === null}
+                >
+                  <div className="text-sm font-medium text-zinc-100">Why</div>
+                  <div className="mt-0.5 text-xs text-zinc-400">
+                    Answer you why with chain of thought reasoning.
                   </div>
                 </button>
               </div>
