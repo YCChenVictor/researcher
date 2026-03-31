@@ -19,22 +19,20 @@ type Message = {
   content: string;
 };
 
-type DecomposeRouteArg = {
-  mode: "route";
-  reasoningRoute: string[];
-};
-
-type DecomposeSingleArg = {
-  mode: "single";
-  topic: string;
-};
-
-type WhyArg = {
-  mode: "why";
-  reasoningRoute: string[];
-};
-
-type BuildMessageArg = DecomposeRouteArg | DecomposeSingleArg | WhyArg;
+type BuildMessageArg =
+  | {
+      mode: "route";
+      reasoningRoute: string[];
+    }
+  | {
+      mode: "why";
+      reasoningRoute: string[];
+    }
+  | {
+      mode: "single";
+      topic: string;
+    }
+  | { mode: "solution"; reasoningRoute: string[] };
 
 const decomposeSystemMessage: Message = {
   role: "system",
@@ -127,16 +125,64 @@ ${route.map((t) => `'${t}'`).join(" -> ")}
   ];
 };
 
+const solutionSystemMessage: Message = {
+  role: "system",
+  content: `
+You are a clear cross-disciplinary problem solver.
+
+Rules:
+- Propose only one solution for the final topic.
+- Use the earlier route only as context for why the final topic matters.
+- Focus on the most practical, highest-leverage solution available now.
+- Prefer solutions that are realistic, actionable, and useful for decision-making.
+- Do not invent weak, symbolic, or unrealistic solutions.
+- If there is no good solution now, return exactly:
+{
+  "solution": "no",
+  "practicalWay": "no"
+}
+- Otherwise, return ONLY valid JSON in this exact shape:
+{
+  "solution": "...",
+  "practicalWay": "..."
+}
+- "solution" should name the single best solution.
+- "practicalWay" should state the most practical way to apply or start implementing it.
+- Keep both fields short and concrete.
+- Do not add any text before or after the JSON.
+  `.trim(),
+};
+
+const buildSolutionMessage = async (
+  reasoningRoute: string[],
+): Promise<Message[]> => {
+  const route = [...reasoningRoute].reverse();
+  return [
+    solutionSystemMessage,
+    {
+      role: "user",
+      content: `
+Provide a solution for the final topic below in the overall route.
+
+Reasoning route:
+${route.map((t) => `'${t}'`).join(" -> ")}
+      `.trim(),
+    },
+  ];
+};
+
 const buildMessage = async (arg: BuildMessageArg): Promise<Message[]> => {
   switch (arg.mode) {
     case "route":
       return buildDecomposeRouteMessage(arg.reasoningRoute);
-
     case "single":
       return buildDecomposeSingleMessage(arg.topic);
-
     case "why":
       return buildWhyMessage(arg.reasoningRoute);
+    case "solution":
+      return buildSolutionMessage(arg.reasoningRoute);
+    default:
+      throw new Error("Invalid mode");
   }
 };
 

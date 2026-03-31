@@ -644,6 +644,27 @@ const whyRoute = async (startId: string, endId: string) => {
   }
 };
 
+const solutionRoute = async (startId: string, endId: string) => {
+  const res = await fetch("/api/solution", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      startId,
+      endId,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to answer solution");
+  }
+
+  const data = (await res.json()) as { answer?: string };
+
+  if (!data.answer?.trim()) {
+    throw new Error("Empty answer");
+  }
+};
+
 export {
   endToStart,
   addNodeAt,
@@ -671,6 +692,7 @@ export {
   idsToTitles,
   addLink,
   whyRoute,
+  solutionRoute,
 };
 
 export type { Mode, DecomposeDraft };
