@@ -32,7 +32,8 @@ type BuildMessageArg =
       mode: "single";
       topic: string;
     }
-  | { mode: "solution"; reasoningRoute: string[] };
+  | { mode: "solution"; reasoningRoute: string[] }
+  | { mode: "preparation"; reasoningRoute: string[] };
 
 const decomposeSystemMessage: Message = {
   role: "system",
@@ -128,29 +129,24 @@ ${route.map((t) => `'${t}'`).join(" -> ")}
 const solutionSystemMessage: Message = {
   role: "system",
   content: `
-You are a clear cross-disciplinary problem solver.
+You are a clear cross-disciplinary preparedness advisor.
 
 Rules:
-- Propose only one solution for the final topic.
-- Use the earlier route only as context for why the final topic matters.
-- Focus on the most practical, highest-leverage solution available now.
-- Prefer solutions that are realistic, actionable, and useful for decision-making.
-- Do not invent weak, symbolic, or unrealistic solutions.
-- If there is no good solution now, return exactly:
+- Focus only on the final topic in the route.
+- Treat the earlier route only as context for why the final topic matters.
+- Do not propose system-level, political, or global solutions.
+- Ask only: what should an individual prepare now in order to reduce personal risk, increase resilience, and preserve future options?
+- Return ONLY valid JSON in this exact shape:
 {
-  "solution": "no",
-  "practicalWay": "no"
-}
-- Otherwise, return ONLY valid JSON in this exact shape:
-{
-  "solution": "...",
+  "preparation": "...",
   "practicalWay": "..."
 }
-- "solution" should name the single best solution.
-- "practicalWay" should state the most practical way to apply or start implementing it.
-- Keep both fields short and concrete.
+- "preparation" should name the single highest-leverage individual preparation.
+- "practicalWay" should state the most practical way to start doing it now.
+- Keep both fields short, concrete, realistic, and actionable.
+- Prefer preparations that improve resilience, adaptability, mobility, survival, income continuity, or decision flexibility.
 - Do not add any text before or after the JSON.
-  `.trim(),
+`.trim(),
 };
 
 const buildSolutionMessage = async (
@@ -171,6 +167,55 @@ ${route.map((t) => `'${t}'`).join(" -> ")}
   ];
 };
 
+const preparationSystemMessage = {
+  role: "system" as const,
+  content: `
+You are a clear cross-disciplinary resilience planner.
+
+Rules:
+- Propose only personal-level preparation for the final topic.
+- Use the earlier route only as context for why the final topic matters.
+- Focus on what one individual can realistically do now.
+- Prefer preparation that is practical, actionable, robust, and useful under uncertainty.
+- Prefer preparation that improves resilience, flexibility, safety, mobility, or earning ability.
+- Do not propose state-level, corporate-level, or global policy solutions.
+- Do not invent extreme, symbolic, or unrealistic preparation.
+- If there is no meaningful personal preparation now, return exactly:
+{
+  "preparation": "no",
+  "practicalWay": "no"
+}
+- Otherwise, return ONLY valid JSON in this exact shape:
+{
+  "preparation": "...",
+  "practicalWay": "..."
+}
+- "preparation" should name the single best personal preparation.
+- "practicalWay" should state the most practical way to start doing it now.
+- Keep both fields short, concrete, and individual-focused.
+- Do not add any text before or after the JSON.
+`.trim(),
+};
+
+const buildPreparationMessage = async (
+  reasoningRoute: string[],
+): Promise<Message[]> => {
+  const route = [...reasoningRoute].reverse();
+
+  return [
+    preparationSystemMessage,
+    {
+      role: "user",
+      content: `
+Provide the best personal-level preparation for the final topic below in the overall route.
+
+Reasoning route:
+${route.map((t) => `'${t}'`).join(" -> ")}
+      `.trim(),
+    },
+  ];
+};
+
 const buildMessage = async (arg: BuildMessageArg): Promise<Message[]> => {
   switch (arg.mode) {
     case "route":
@@ -181,6 +226,8 @@ const buildMessage = async (arg: BuildMessageArg): Promise<Message[]> => {
       return buildWhyMessage(arg.reasoningRoute);
     case "solution":
       return buildSolutionMessage(arg.reasoningRoute);
+    case "preparation":
+      return buildPreparationMessage(arg.reasoningRoute);
     default:
       throw new Error("Invalid mode");
   }

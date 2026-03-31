@@ -665,6 +665,27 @@ const solutionRoute = async (startId: string, endId: string) => {
   }
 };
 
+const preparationRoute = async (startId: string, endId: string) => {
+  const res = await fetch("/api/preparation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      startId,
+      endId,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to answer preparation");
+  }
+
+  const data = (await res.json()) as { answer?: string };
+
+  if (!data.answer?.trim()) {
+    throw new Error("Empty answer");
+  }
+};
+
 export {
   endToStart,
   addNodeAt,
@@ -693,6 +714,7 @@ export {
   addLink,
   whyRoute,
   solutionRoute,
+  preparationRoute,
 };
 
 export type { Mode, DecomposeDraft };

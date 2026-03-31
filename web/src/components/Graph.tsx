@@ -22,6 +22,7 @@ import {
   decomposeRoute,
   whyRoute,
   solutionRoute,
+  preparationRoute,
 } from "./client/graph";
 import type { Node, LinkSim, Runtime, Menu, NodePair } from "../types/graph";
 
@@ -89,6 +90,15 @@ export const ForceGraph: React.FC = () => {
     if (!pendingPair) return;
 
     await solutionRoute(pendingPair.source.key, pendingPair.target.key);
+
+    setShowConnectOptions(false);
+    setPendingPair(null);
+  };
+
+  const handlePreparation = async () => {
+    if (!pendingPair) return;
+
+    await preparationRoute(pendingPair.source.key, pendingPair.target.key);
 
     setShowConnectOptions(false);
     setPendingPair(null);
@@ -271,6 +281,12 @@ export const ForceGraph: React.FC = () => {
                 onClick={handleSolution}
               >
                 Solution
+              </button>
+              <button
+                className="rounded bg-green-600 px-3 py-2 text-white"
+                onClick={handlePreparation}
+              >
+                Preparation
               </button>
               <button
                 className="rounded bg-gray-300 px-3 py-2 text-black"
