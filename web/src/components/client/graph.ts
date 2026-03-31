@@ -235,12 +235,17 @@ const toLinkJson = (l: LinkSim): LinkJson => ({
   target: getId(l.target),
 });
 
+type LinkHandlers = {
+  onContextMenu: (event: MouseEvent, d: LinkSim) => void;
+};
+
 const renderLinks = (
   linkGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
   links: LinkSim[],
   rt: Runtime,
+  handlers: LinkHandlers,
 ): d3.Selection<SVGLineElement, LinkSim, SVGGElement, unknown> => {
-  const byKey = new Map(rt.nodes.map((n: Node) => [String(n.key), n]));
+  const byKey = new Map(rt.nodes.map((n) => [String(n.key), n]));
 
   const pos = (e: End) => {
     if (isNodeObj(e)) return { x: e.x ?? 0, y: e.y ?? 0 };
@@ -259,17 +264,7 @@ const renderLinks = (
         .style("stroke", "#999")
         .style("stroke-width", 4)
         .style("pointer-events", "stroke")
-        .style("cursor", "context-menu")
-        .on("contextmenu", (event, d) => {
-          event.preventDefault();
-          event.stopPropagation();
-          rt.setMenu({
-            kind: "link",
-            link: toLinkJson(d),
-            x: event.clientX,
-            y: event.clientY,
-          });
-        });
+        .style("cursor", "context-menu");
 
       g.append("line")
         .attr("class", "link")
@@ -279,15 +274,25 @@ const renderLinks = (
       return g;
     });
 
-  const lineSel = pairs.selectAll<SVGLineElement, LinkSim>("line");
+  pairs
+    .select<SVGLineElement>("line.link-hit")
+    .on("contextmenu", (event, d) =>
+      handlers.onContextMenu(event as MouseEvent, d),
+    );
 
-  lineSel
+  pairs.select<SVGLineElement>("line.link-hit")
     .attr("x1", (d) => pos(d.source).x)
     .attr("y1", (d) => pos(d.source).y)
     .attr("x2", (d) => pos(d.target).x)
     .attr("y2", (d) => pos(d.target).y);
 
-  return lineSel;
+  pairs.select<SVGLineElement>("line.link")
+    .attr("x1", (d) => pos(d.source).x)
+    .attr("y1", (d) => pos(d.source).y)
+    .attr("x2", (d) => pos(d.target).x)
+    .attr("y2", (d) => pos(d.target).y);
+
+  return pairs.select<SVGLineElement>("line.link");
 };
 
 const createSimulation = (
@@ -370,39 +375,6 @@ const setSelectedSource = (rt: Runtime, next: Node | null) => {
   updateNodeHighlight(rt);
 };
 
-const createNodeInteractions = (
-  rt: Runtime,
-  getMode: () => Mode,
-  setDecomposeDraft: React.Dispatch<React.SetStateAction<DecomposeDraft>>,
-) => {
-  const onClick = (event: MouseEvent, d: Node) => {
-    handleNodeClickLogic(event, d, rt.selectedSource, {
-      mode: getMode(),
-      setSelectedSource: (n) => setSelectedSource(rt, n),
-      setPendingPair: rt.setPendingPair,
-      setShowOptions: rt.setShowConnectOptions,
-      openDecomposeModal: (draft) => setDecomposeDraft(draft),
-    });
-  };
-
-  const onContextMenu = (event: MouseEvent, d: Node) => {
-    event.preventDefault();
-    event.stopPropagation();
-    rt.setMenu({ kind: "node", node: d });
-  };
-
-  return { onClick, onContextMenu };
-};
-
-const bindLinkForce = (
-  simulation: d3.Simulation<Node, LinkSim>,
-  links: LinkSim[],
-) => {
-  const linkForce = simulation.force("link") as d3.ForceLink<Node, LinkSim>;
-  linkForce.id((d) => d.key);
-  linkForce.links(links);
-};
-
 const getNodeKey = (node: string | Node) =>
   typeof node === "string" ? node : node.key;
 
@@ -416,15 +388,16 @@ const addLink = (rt: Runtime, sourceNode: Node, targetNode: Node) => {
 
   rt.links = [...rt.links, { source: sourceNode.key, target: targetNode.key }];
 
-  bindLinkForce(rt.simulation, rt.links);
-  updateLinks(rt);
   rt.simulation.alpha(1).restart();
 
   void persistGraph(rt.nodes, rt.links);
 };
 
-const updateLinks = (rt: Runtime) => {
-  rt.linkSel = renderLinks(rt.linkGroup, rt.links, rt);
+const updateLinks = (
+  rt: Runtime,
+  handlers: LinkHandlers,
+) => {
+  rt.linkSel = renderLinks(rt.linkGroup, rt.links, rt, handlers);
 };
 
 const removeLink = async (
@@ -439,9 +412,8 @@ const removeLink = async (
     (l) => !(endKey(l.source) === s && endKey(l.target) === t),
   );
 
-  bindLinkForce(rt.simulation, rt.links);
+  // bindLinkForce(rt.simulation, rt.links);
 
-  updateLinks(rt);
   updateNodes(rt, handlers);
 
   rt.simulation.alpha(1).restart();
@@ -451,20 +423,86 @@ const removeLink = async (
   rt.setMenu(null);
 };
 
+type NodeMenu = {
+  kind: "node";
+  node: Node;
+  x: number;
+  y: number;
+};
+
+type LinkMenu = {
+  kind: "link";
+  link: LinkSim;
+  x: number;
+  y: number;
+};
+
+type Menu = NodeMenu | LinkMenu | null;
+
+const createNodeInteractions = (
+  rt: Runtime,
+  deps: {
+    setPendingPair: (pair: { source: Node; target: Node } | null) => void;
+    setShowConnectOptions: (value: boolean) => void;
+    setMenu: (value: Menu) => void;
+  },
+) => {
+  const onClick = (event: MouseEvent, d: Node) => {
+    event.stopPropagation();
+
+    if (rt.selectedSource === d) {
+      rt.selectedSource = null;
+      return;
+    }
+
+    if (!rt.selectedSource) {
+      rt.selectedSource = d;
+      return;
+    }
+
+    deps.setPendingPair({
+      source: rt.selectedSource,
+      target: d,
+    });
+    rt.selectedSource = null;
+    deps.setShowConnectOptions(true);
+  };
+
+  const onContextMenu = (event: MouseEvent, d: Node) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    deps.setMenu({
+      kind: "node",
+      node: d,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
+  return { onClick, onContextMenu };
+};
+
 const updateNodes = (
   rt: Runtime,
   handlers: ReturnType<typeof createNodeInteractions>,
 ) => {
   // These events will be bind to all the nodes again
   rt.nodeSel = rt.nodeSel
-    .data(rt.nodes, (d) => d.key)
-    .join(
-      (enter) => enter.append("circle").attr("r", 10).call(rt.drag),
-      (update) => update.call(rt.drag),
-      (exit) => exit.remove(),
-    )
-    .on("click", handlers.onClick)
-    .on("contextmenu", handlers.onContextMenu);
+  .data(rt.nodes, (d) => d.key)
+  .join(
+    (enter) => {
+      const g = enter.append("g").attr("class", "node");
+      g.append("circle").attr("r", 10);
+      g.append("text").attr("text-anchor", "middle").attr("dy", 4);
+      return g;
+    },
+    (update) => update,
+    (exit) => exit.remove(),
+  )
+  .call(rt.drag)
+  .on("click", handlers.onClick)
+  .on("contextmenu", handlers.onContextMenu);
 
   rt.labelSel = rt.labelSel
     .data(rt.nodes, (d) => d.key)
@@ -509,9 +547,8 @@ const removeNode = async (
   rt.nodes = rt.nodes.filter((n) => n.key !== key);
 
   rt.simulation.nodes(rt.nodes);
-  bindLinkForce(rt.simulation, rt.links);
+  // bindLinkForce(rt.simulation, rt.links);
 
-  updateLinks(rt);
   updateNodes(rt, handlers);
 
   rt.simulation.alpha(1).restart();
